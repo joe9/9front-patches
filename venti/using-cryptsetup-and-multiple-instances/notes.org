@@ -1,4 +1,21 @@
 
+from http://9legacy.org/patch.html
+
+libventi-noarchive 	/sys/src/libventi 	Define VtEntryNoArchive constant. 	David du Colombier
+http://9legacy.org/9legacy/patch/libventi-noarchive.diff
+
+libventi-redial 	/sys/src/libventi 	Implement vtreconn and vtredial functions. 	David du Colombier
+http://9legacy.org/9legacy/patch/libventi-redial.diff
+
+libventi-sha1 	/sys/src/libventi 	Implement vtsha1 and vtsha1check functions. 	David du Colombier
+http://9legacy.org/9legacy/patch/libventi-sha1.diff
+
+I am not sure if I need this patch. I cannot find sys/lib/dist/pc directory on plan9front
+dist-venti-bloom 	/sys/lib/dist/pc/inst 	Add Venti Bloom filter configuration. 	David du Colombier
+
+<mycroftiv> you dont need that bloom filter config, that is for making the installer
+            set up bloom filter when it is doing a clean system install
+
 installing venti patches (using drawterm)
 
 	cd /
@@ -23,14 +40,14 @@ configuring fossil+venti
     # disk to be used: WD Green 2 TB - sdE2 -- venti + fossil daily backup
     # delete any existing partition on sdE2, using disk/fdisk /dev/sdE2/data, d p1, w, q
 
-# disk/mbr /dev/sdE2/data
-# disk/fdisk -baw /dev/sdE2/data
-# ls /dev/sdE2
+disk/mbr /dev/sdE2/data
+disk/fdisk -baw /dev/sdE2/data
+ls /dev/sdE2
 /dev/sdE2/ctl
 /dev/sdE2/data
 /dev/sdE2/plan9
 /dev/sdE2/raw
-# disk/prep -w -b -a^(fossil arenas bloom isect) /dev/sdE2/plan9
+disk/prep -w -b -a^(fossil arenas bloom isect) /dev/sdE2/plan9
 no plan9 partition table found
 fossil 624956068
 arenas 3124780340
@@ -50,22 +67,25 @@ On the 2TB disk, disk/prep reported:
 
 Using the above sizes and restricting bloom to 64m, I came up with the below
 echo 'a fossil 2 2+298g
-a bloom . .+64m
+a bloom . .+65m
 a isect . .+75g
 a arenas . $-1
 w
 p
 q' | disk/prep -b  /dev/sdE2/plan9
 
-using cryptsetup on /dev/sdE2/fossil, /dev/sdE2/arenas, /dev/sdE2/isect:
+using cryptsetup on /dev/sdE2/fossil, /dev/sdE2/arenas, /dev/sdE2/isect, /dev/sdE2/bloom:
 	# From http://fqa.9front.org/fqa4.html , bottom of the page: format the partitions
-	disk/cryptsetup -f /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect
+	disk/cryptsetup -f /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect /dev/sdE2/bloom
         # use this command to figure out the ctl activation commands. Use this when starting up the disk server:
-	disk/cryptsetup -o /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect
+	disk/cryptsetup -o /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect /dev/sdE2/bloom
+        # to activate, either echo the output from the above command to /dev/fs/ctl or run the below command
+	disk/cryptsetup -i /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect /dev/sdE2/bloom
 
 venti setup:
 	venti/fmtarenas arenas-sdE2 /dev/fs/arenas-sdE2
 	venti/fmtisect isect-sdE2 /dev/fs/isect-sdE2
+	venti/fmtbloom /dev/fs/bloom-sdE2
 	venti/fmtindex /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
 	venti/conf -w /dev/fs/arenas-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
         venti/venti -c /dev/fs/arenas-sdE2
@@ -92,6 +112,7 @@ disk server startup:
 	echo 'crypt fossil-sdE2 /dev/sdE2/fossil 4ED863CA244CAD00FDDBA6A9EC8774A627389E509DA7F8BB2253331B80D17D05'>>/dev/fs/ctl
 	echo 'crypt arenas-sdE2 /dev/sdE2/arenas 314E6D9E4815054E156B811E712BFC4E57D3C829B9D283DE43B2E9EDFFD224F1'>>/dev/fs/ctl
 	echo 'crypt isect-sdE2 /dev/sdE2/isect 69E1E73B3E9FB9D674C2103E1C23659A590A8FEB6424E18AFF0E945F9292142B'>>/dev/fs/ctl
+	echo 'crypt bloom-sdE2 /dev/sdE2/bloom 69E1E73B3E9FB9D674C2103E1C23659A590A8FEB6424E18AFF0E945F9292142B'>>/dev/fs/ctl
         venti=192.168.0.5
         venti/venti -c /dev/fs/arenas-sdE2
         fossil/fossil -f /dev/fs/fossil-sdE2
@@ -106,6 +127,15 @@ to stop the fossil and venti servers (added to fshalt by the above patch):
         venti/sync
         echo fsys all halt >>/srv/fscons-sdE2
 
+to stop venti manually:
+        kill venti | rc
+        kill fossil | rc
+
+to stop cryptsetup disks:
+        echo 'del fossil-sdE2'>>/dev/fs/ctl
+        echo 'del arenas-sdE2'>>/dev/fs/ctl
+        echo 'del isect-sdE2'>>/dev/fs/ctl
+        echo 'del bloom-sdE2'>>/dev/fs/ctl
 
 create a root directory in /n/fossil to use:
 <mycroftiv> fsys main create active/backups username username d775, gotta specify uid and gid   [19:36]
@@ -195,7 +225,29 @@ port for venti
 :glenda@cirno:/lib/ndb; grep venti /lib/ndb/common
 tcp=venti port=17034
 
-TODO:
-stop venti
-cryptsetup
-multiple disks
+stopping venti
+<joe9> mycroftiv: how do you stop venti? I saw that you are doing venti/sync and nothing more.  [10:06]
+<joe9> also, venti does not use the ctl file approach of fossil or other plan9 services. Is there a reason behind that?
+<mycroftiv> you really just need to do the sync to make sure everything is written to disk, then you can reboot or kill the processes, based on my understanding
+<mycroftiv> the fshalt script that i linked you is based on how the old labs venti/fossil fshalt worked, so i assume it is adequate (maybe a dangerous assumption?)  [10:07]
+<mycroftiv> and yeah venti is kinda lame in how it seems to not be very plan9-ish
+<mycroftiv> it presents no fs interface and uses that http server approach to controlling it
+<mycroftiv> i dont think there is much of a good reason for that, i think maybe the venti authors had ambitions it would be a general-unix program more than staying within plan 9  [10:08]
+<mycroftiv> making venti present an fs interface as an alternative to the http server would be a good project actually  [10:11]
+<mycroftiv> im actually surprised nobody ever bothered to do it, it wouldnt be very hard
+<joe9> I want to change the venti configuration. I did venti/sync, the fsys all halt to /srv/fscons. But, I find multiple venti processes in ps. Any suggestions for killing venti?
+<mycroftiv> try typing 'kill venti' - it should output all those processes. so kill venti| rc should work im pretty sure  [10:12]
+<mycroftiv> venti and fossil both create a lot of subprocesses  [10:13]
+<mycroftiv> also you probably need to kill off the fossil too, i doubt if you kill the venti, reconfigure and restart, that the fossil will reconnect - maybe it will, that might be the point of the venti-redial patch from 9legacy tho
+[mycroftiv]
+
+sizing bloom partition to 65MB instead of 64MB
+<joe9> I have bloom partition   bloom            624951298 625082370     (131072 sectors, 64.00 MB)
+<joe9> but, :glenda@cirno:/srv; 	venti/fmtbloom /dev/fs/bloom-sdE2
+<joe9> warning: size not a power of 2; only using 32MB
+<joe9> fmtbloom: using 32MB, 32 hashes/score, best up to 5,965,232 blocks
+<mycroftiv> that does seem a bit strange, measuring size is always a bit tricky, probably make the bloom a tiny bit bigger and it will use all of it  [10:23]
+<mycroftiv> surprises me a little because when i do use bloom, the .+64m has seemed to size it correctly  [10:24]
+<joe9> I can try +65m
+<mycroftiv> might as well, i doubt it will mess anything up to waste that mb  [10:25]
+[mycroftiv]
