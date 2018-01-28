@@ -137,6 +137,18 @@ to stop cryptsetup disks:
         echo 'del isect-sdE2'>>/dev/fs/ctl
         echo 'del bloom-sdE2'>>/dev/fs/ctl
 
+to copy data from existing machine to the new fossil system:
+        mkdir /n/fossil-sdE2/backups/destination
+        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        echo fsys all snap -a >>/srv/fscons-sdE2
+        venti/sync
+
+to mount the fossil server on linux using 9pfuse:
+        PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mt-pt
+        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
+        TODO how to do this from linux? -- venti/sync
+
 create a root directory in /n/fossil to use:
 <mycroftiv> fsys main create active/backups username username d775, gotta specify uid and gid   [19:36]
 <mycroftiv> you use the /srv/fscons
@@ -251,3 +263,4 @@ sizing bloom partition to 65MB instead of 64MB
 <joe9> I can try +65m
 <mycroftiv> might as well, i doubt it will mess anything up to waste that mb  [10:25]
 [mycroftiv]
+
