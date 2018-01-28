@@ -1,0 +1,39 @@
+# HG changeset patch
+# User joe
+# Date 1517080206 25200
+#      Sat Jan 27 12:10:06 2018 -0700
+# Node ID 3faeddec3c0c12f66bcc6ba7f4795d632604654c
+# Parent  59fd1a5fc7594c3ac4f86cba5fbff9372bdb21f3
+moved the /cfg/$sysname/termrc to start after ip/ipconfig runs
+
+as fossil and venti need the ip address to start
+
+diff -r 59fd1a5fc759 -r 3faeddec3c0c rc/bin/termrc
+--- a/rc/bin/termrc	Fri Jan 05 17:53:07 2018 -0700
++++ b/rc/bin/termrc	Sat Jan 27 12:10:06 2018 -0700
+@@ -50,9 +50,11 @@
+ # parallelism for mk
+ NPROC=`{wc -l </dev/sysstat}
+ 
++# moving this to after the ip/ipconfig is set as fossil+venti needs an ip
++# address to start
+ # machine specific startup (e.g., for devices not probed)
+-if(test -e /cfg/$sysname/termrc)
+-	. /cfg/$sysname/termrc
++#if(test -e /cfg/$sysname/termrc)
++#	. /cfg/$sysname/termrc
+ 
+ # automatic ip address setup
+ if(test -r /net/ipselftab){
+@@ -69,6 +71,11 @@
+ if(! test -e /net/dns)
+ 	ndb/dns -r
+ 
++# moved this from above as fossil+venti needs an ip address to start
++# machine specific startup (e.g., for devices not probed)
++if(test -e /cfg/$sysname/termrc)
++	. /cfg/$sysname/termrc
++
+ if(! ~ $terminal *vx32*){
+ 	# start timesync if it isn't running and we weren't told not to
+ 	if(! ps|grep -s timesync)

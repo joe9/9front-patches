@@ -1,0 +1,53 @@
+# HG changeset patch
+# User joe
+# Date 1517103697 25200
+#      Sat Jan 27 18:41:37 2018 -0700
+# Node ID 9beaf6037aa5453b5d4f2462a5ac8b2b8cfd787f
+# Parent  3faeddec3c0c12f66bcc6ba7f4795d632604654c
+shutdown fossil and venti instances when shutting down
+
+diff -r 3faeddec3c0c -r 9beaf6037aa5 rc/bin/fshalt
+--- a/rc/bin/fshalt	Sat Jan 27 12:10:06 2018 -0700
++++ b/rc/bin/fshalt	Sat Jan 27 18:41:37 2018 -0700
+@@ -24,6 +24,7 @@
+ 
+ c=`{ls /srv/cwfs*cmd >[2]/dev/null}
+ h=`{ls /srv/hjfs*cmd >[2]/dev/null}
++f=`{ls /srv/fscons* >[2]/dev/null}
+ 
+ # for scram, don't scram other systems
+ bind -b '#P' /dev
+@@ -34,6 +35,22 @@
+ 		scram=yes
+ }
+ 
++for(i in $f){
++	echo -n $i
++	venti/sync -h localhost >[2]/dev/null &
++	venti/sync  >[2]/dev/null &
++	sleep 2
++	echo -n '...sync...'
++	{
++		echo
++		echo 'fsys all sync'
++		sleep 4
++	} < $i >> $i
++	venti/sync -h localhost >[2]/dev/null &
++	venti/sync  >[2]/dev/null &
++	sleep 2
++}
++
+ # halting (binaries we run can't be on the fs we're halting)
+ ramfs
+ builtin cd /tmp
+@@ -63,6 +80,10 @@
+ 		echo halt >>$i
+ 		sleep 2
+ 	}
++	for(i in $f){
++		echo fsys all halt >>$i
++		sleep 3
++	}
+ 	echo
+ 	echo done halting
+ 

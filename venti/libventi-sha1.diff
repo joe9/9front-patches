@@ -1,0 +1,54 @@
+--- /n/sources/plan9/sys/include/venti.h	Sat Sep  1 04:42:21 2007
++++ /sys/include/venti.h	Fri Mar 23 00:00:00 2012
+@@ -378,6 +378,10 @@
+ int	vtsync(VtConn*);
+ int	vtping(VtConn*);
+ 
++/* sha1 */
++void	vtsha1(uchar score[VtScoreSize], uchar*, int);
++int	vtsha1check(uchar score[VtScoreSize], uchar*, int);
++
+ /*
+  * Data blocks and block cache.
+  */
+--- /n/sources/plan9/sys/src/libventi/mkfile	Sat Sep  1 04:43:35 2007
++++ /sys/src/libventi/mkfile	Fri Mar 23 00:00:00 2012
+@@ -24,6 +24,7 @@
+ 	scorefmt.$O\
+ 	send.$O\
+ 	server.$O\
++	sha1.$O\
+ 	srvhello.$O\
+ 	strdup.$O\
+ 	string.$O\
+--- /sys/src/libventi/sha1.c	Fri Mar 23 08:50:55 2012
++++ /sys/src/libventi/sha1.c	Fri Mar 23 00:00:00 2012
+@@ -0,0 +1,28 @@
++#include <u.h>
++#include <libc.h>
++#include <venti.h>
++#include <libsec.h>
++
++void
++vtsha1(uchar score[VtScoreSize], uchar *p, int n)
++{
++	DigestState ds;
++
++	memset(&ds, 0, sizeof ds);
++	sha1(p, n, score, &ds);
++}
++
++int
++vtsha1check(uchar score[VtScoreSize], uchar *p, int n)
++{
++	DigestState ds;
++	uchar score2[VtScoreSize];
++
++	memset(&ds, 0, sizeof ds);
++	sha1(p, n, score2, &ds);
++	if(memcmp(score, score2, VtScoreSize) != 0) {
++		werrstr("vtsha1check failed");
++		return -1;
++	}
++	return 0;
++}

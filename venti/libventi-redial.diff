@@ -1,0 +1,83 @@
+--- /n/sources/plan9/sys/include/venti.h	Sat Sep  1 04:42:21 2007
++++ /sys/include/venti.h	Fri Mar 23 00:00:00 2012
+@@ -334,7 +334,9 @@
+ };
+ 
+ VtConn*	vtconn(int infd, int outfd);
++int	vtreconn(VtConn*, int, int);
+ VtConn*	vtdial(char*);
++int	vtredial(VtConn*, char*);
+ void	vtfreeconn(VtConn*);
+ int	vtsend(VtConn*, Packet*);
+ Packet*	vtrecv(VtConn*);
+--- /n/sources/plan9/sys/man/2/venti-conn	Sun Dec  2 23:42:21 2007
++++ /sys/man/2/venti-conn	Fri Mar 23 00:00:00 2012
+@@ -28,7 +28,13 @@
+ VtConn*	vtconn(int infd, int outfd)
+ .PP
+ .B
++int	vtreconn(VtConn *z, int infd, int outfd)
++.PP
++.B
+ VtConn*	vtdial(char *addr)
++.PP
++.B
++int	vtredial(VtConn *z, char *addr)
+ .PP
+ .B
+ int	vtversion(VtConn *z)
+--- /n/sources/plan9/sys/src/libventi/conn.c	Sat Apr 21 21:04:00 2007
++++ /sys/src/libventi/conn.c	Fri Mar 23 00:00:00 2012
+@@ -27,6 +27,28 @@
+ 	return z;
+ }
+ 
++int
++vtreconn(VtConn *z, int infd, int outfd)
++{
++	NetConnInfo *nci;
++
++	z->state = VtStateAlloc;
++	if(z->infd >= 0)
++		close(z->infd);
++	z->infd = infd;
++	if(z->outfd >= 0)
++		close(z->outfd);
++	z->outfd = outfd;
++	nci = getnetconninfo(nil, infd);
++	if(nci == nil)
++		snprint(z->addr, sizeof z->addr, "/dev/fd/%d", infd);
++	else{
++		strecpy(z->addr, z->addr+sizeof z->addr, nci->raddr);
++		freenetconninfo(nci);
++	}
++	return 0;
++}
++
+ void
+ vtfreeconn(VtConn *z)
+ {
+--- /n/sources/plan9/sys/src/libventi/dial.c	Sat Apr 21 21:04:01 2007
++++ /sys/src/libventi/dial.c	Fri Mar 23 00:00:00 2012
+@@ -23,3 +23,21 @@
+ 		strecpy(z->addr, z->addr+sizeof z->addr, na);
+ 	return z;
+ }
++
++int
++vtredial(VtConn *z, char *addr)
++{
++	char *na;
++	int fd;
++
++	if(addr == nil)
++		addr = getenv("venti");
++	if(addr == nil)
++		addr = "$venti";
++
++	na = netmkaddr(addr, "tcp", "venti");
++	if((fd = dial(na, nil, nil, nil)) < 0)
++		return fd;
++
++	return vtreconn(z, fd, fd);
++}

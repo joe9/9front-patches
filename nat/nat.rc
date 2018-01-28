@@ -1,0 +1,33 @@
+#!/bin/rc -vx
+
+# usage
+
+# objective
+
+# What are ‘protocol numbers’ in IP?
+# When the kernel receives IP packets, how does it know what they
+# represent? Are they part of a TCP stream, a UDP datagram, or something
+# else?
+# The answer is that all IP packets contain an IP protocol number. It’s
+# the ninth byte in the packet. Each protocol running over IP has its
+# own number. TCP is number 6; UDP is number 17.
+# You can see them all at /etc/protocols on your machine! The official
+# list is maintained by IANA (Internet Assigned Numbers Authority, part
+  #   of ICANN) here:
+# http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+# ICMP protocol number = 1 from /etc/protocols
+
+# the data, iph and proto should be strings of 2 hexadecimal digits
+#   representing 8-bit values.
+~ $#netdir 1 || netdir=/net/ipmux/clone
+netdir=`{basename -d $netdir} || exit
+<>$netdir/clone {
+  netdir=$netdir/`{read} || exit
+  >[3] $netdir/ctl {
+    echo -n 'connect proto=01' >[1=3] || exit
+    cat $netdir/local || exit
+    cat $netdir/remote || exit
+    cat $netdir/status || exit
+    cat $netdir/data >/tmp/nat.bin || exit
+  }
+}

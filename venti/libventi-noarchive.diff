@@ -1,0 +1,12 @@
+--- /n/sources/plan9/sys/include/venti.h	Sat Sep  1 04:42:21 2007
++++ /sys/include/venti.h	Fri Mar 23 00:00:00 2012
+@@ -134,7 +134,8 @@
+ 	_VtEntryDir = 1<<1,		/* a directory */
+ 	_VtEntryDepthShift = 2,		/* shift for pointer depth */
+ 	_VtEntryDepthMask = 7<<2,	/* mask for pointer depth */
+-	VtEntryLocal = 1<<5		/* for local storage only */
++	VtEntryLocal = 1<<5,		/* for local storage only */
++	VtEntryNoArchive = 1<<6		/* for local storage only */
+ };
+ enum
+ {
