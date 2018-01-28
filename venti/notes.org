@@ -91,7 +91,7 @@ fossil setup:
         ls /srv
         mount -c /srv/fossil /n/fossil
 
-startup:
+disk server startup:
         # do not need these commands: diskparts does it.
         #  disk/fdisk -p /dev/sdE2/data > /dev/sdE2/ctl
         #  disk/prep -p /dev/sdE2/plan9 > /dev/sdE2/ctl
@@ -102,3 +102,61 @@ startup:
         fossil/fossil -f /dev/sdE2/fossil
         ls /srv
         mount -c /srv/fossil /n/fossil
+
+drawterm startup (can add this to profile):
+        ls /srv
+        mount -c /srv/fossil /n/fossil
+
+create a root directory in /n/fossil to use:
+<mycroftiv> fsys main create active/backups username username d775, gotta specify uid and gid   [19:36]
+<mycroftiv> you use the /srv/fscons
+<mycroftiv> its like con /srv/fscons, type commands, then ctrl-backslash q
+<joe9> cool, That worked.
+
+:glenda@cirno:/srv; con /srv/fscons
+prompt: fsys main create active/backups glenda glenda d775
+prompt: >>> q
+:glenda@cirno:/srv; cd /n/fossil
+
+
+<mycroftiv> do you understand how to trigger snapshots and how to access the archival
+            dump?  [19:41]
+<joe9> I am reading up the manpages . snaptime for automatic  [19:42]
+<mycroftiv> yeah, you can also make a snapshot whenever you want, by connecting to the
+            fscons and doing fsys main snap - a  [19:43]
+<mycroftiv> when it completes, it will print the rootscore of that snapshot
+<mycroftiv> you can also see the msot recent snapshot rootscore if you have all the
+            fossil commands installed by doing fossil/last /path/to/fossildrive
+<mycroftiv> once you have made snapshots, you can view them by doing something like
+            mount /srv/fossil /n/dump main/archive
+<mycroftiv> the 'archive' is a separate tree that fossil serves containing all the
+            snapshots you have made, organized by date  [19:47]
+<mycroftiv> you can also access them by storing the rootscores i mentioned earlier,
+            and putting the output of a fossil/last command into a file called like
+            foo.vac and using vacfs foo.vac to access it  [19:48]
+
+
+<joe9> I can get the /n/fossil/backups show up in my serial console (booting 9front on
+       serial console)  [19:44]
+<joe9> but, with drawterm, I see /n/fossil but nothing below that.
+<mycroftiv> thats just a namespace issue im sure  [19:45]
+<mycroftiv> drawterm in and do mount -c /srv/fossil /n/fossil
+<mycroftiv> your /lib/namespace file doesnt have that mount in it, and when you
+            drawterm in you get a new namespace created from what it says in that file
+<mycroftiv> you could also add the mount command to your profile, which is also run
+            when you drawterm in, as an alternate method  [19:46]
+<joe9> cool, that worked. Thanks.
+
+<mycroftiv> so you want like srv -p fscons.diskA, srv -A fossil.diskA for one, and
+            diskB for those parameters with the other, i think you get it
+<mycroftiv> each fossil will have its own fscons that only knows about that one
+<mycroftiv> and all the mount commands, etc will be separate  [19:53]
+<mycroftiv> and there will be two sets of fossil processes running
+<mycroftiv> similarly with venti, and if this is on the same machine, youll obviously
+            have to give them different ports to listen and communicate on  [19:54]
+<mycroftiv> so one would be using 17034 for venti data and 8000 for the http
+            interface, and the other would be on 17035 and 8001
+<mycroftiv> with the fossils configured to know which one they are supposed to talk to
+<mycroftiv> then you could use the wrarena/backup stuff we discussed earlier to have
+            them synchronize what data is available in each  [19:55]
+[mycroftiv]
