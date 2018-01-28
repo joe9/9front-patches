@@ -160,3 +160,38 @@ prompt: >>> q
 <mycroftiv> then you could use the wrarena/backup stuff we discussed earlier to have
             them synchronize what data is available in each  [19:55]
 [mycroftiv]
+
+<joe9> btw, why is the http port needed?  [19:57]
+<joe9> or, is it mandatory?  [19:58]
+<joe9> I started mine without it and it seemed to startup.
+<mycroftiv> its how you control venti and get meta-information out of it
+<mycroftiv> and it is probably using the default port
+<mycroftiv> i forget if it defaults to using :8000 if you dont specify anything
+<mycroftiv> but for instance if you want to do what i was just talking about,
+            synchronize the data between ventis, the only way you cna find out the
+            information you need about what blocks are written to copy is using that
+            port  [19:59]
+<mycroftiv> you also kind of need that port to do the fshalt routines safely, because
+            it talks on that port to tell venti to make sure to sync to disk
+<joe9> I tried mothra <ip>:8000 and it says bad url  [20:00]
+<mycroftiv> did you put the http:// first?
+<mycroftiv> you can use netstat -n to see if anything is listening on that port, also
+                                                                                [20:01]
+<joe9> no, I just did it with http:// and it says No status connection refused.
+<mycroftiv> so it probably does need to be specifified
+<joe9> ok, will do that.
+<joe9> btw, how do you pick the port numbers for venti (start from 17034 and keep
+       incrementing for additional servers)?  [20:03]
+<mycroftiv> 17034 is the default, its entirely up to you what port numbers you use
+<joe9> I agree. Just want to check if there is a convention that you use.  [20:04]
+<mycroftiv> i only run one venti per box and get my redundancy through multiple nodes
+            so that issue never realy comes up for me
+<mycroftiv> knowing me, id probably use 17034 and 27034 because when i do have
+            multiple copies of a service, i usually do it that way, but its obviously
+            just convention  [20:06]
+<joe9> that is actually a pretty good idea. and you can patternmatch it using [12]7034
+                                                                                [20:10]
+
+port for venti
+:glenda@cirno:/lib/ndb; grep venti /lib/ndb/common
+tcp=venti port=17034
