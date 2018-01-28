@@ -107,6 +107,11 @@ drawterm startup (can add this to profile):
         ls /srv
         mount -c /srv/fossil /n/fossil
 
+to stop the fossil and venti servers:
+        venti/sync
+        echo fsys all halt >>/srv/fscons
+
+
 create a root directory in /n/fossil to use:
 <mycroftiv> fsys main create active/backups username username d775, gotta specify uid and gid   [19:36]
 <mycroftiv> you use the /srv/fscons
@@ -195,3 +200,8 @@ prompt: >>> q
 port for venti
 :glenda@cirno:/lib/ndb; grep venti /lib/ndb/common
 tcp=venti port=17034
+
+TODO:
+stop venti
+cryptsetup
+multiple disks
