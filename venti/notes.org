@@ -96,7 +96,7 @@ startup:
         #  disk/fdisk -p /dev/sdE2/data > /dev/sdE2/ctl
         #  disk/prep -p /dev/sdE2/plan9 > /dev/sdE2/ctl
 
-        # added these to /cfg/cirno/termrc of cirno
+        # added these to /cfg/$sysname/termrc of cirno (my disk server)
         venti=192.168.0.5
         venti/venti -c /dev/sdE2/arenas
         fossil/fossil -f /dev/sdE2/fossil
