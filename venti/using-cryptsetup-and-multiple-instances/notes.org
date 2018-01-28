@@ -1,0 +1,202 @@
+
+installing venti patches (using drawterm)
+
+	cd /
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-noarchive.diff
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-redial.diff
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-sha1.diff
+	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/start-cfg-sysname-termrc-after-ipconfig.patch
+	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/stop-fossil-venti-servers.patch
+	cd /sys/src/libventi
+	mk clean
+	mk install
+	mk clean
+
+installing fossil
+   ;# hg clone https://bitbucket.org/mycroftiv/fossilnewventi
+   This is the new version of fossil using libventi instead of liboventi
+
+	cd /mnt/term/home/j/dev/apps/plan9/custom/src/fossilnewventi/
+        INSTALL
+
+configuring fossil+venti
+    # disk to be used: WD Green 2 TB - sdE2 -- venti + fossil daily backup
+    # delete any existing partition on sdE2, using disk/fdisk /dev/sdE2/data, d p1, w, q
+
+# disk/mbr /dev/sdE2/data
+# disk/fdisk -baw /dev/sdE2/data
+# ls /dev/sdE2
+/dev/sdE2/ctl
+/dev/sdE2/data
+/dev/sdE2/plan9
+/dev/sdE2/raw
+# disk/prep -w -b -a^(fossil arenas bloom isect) /dev/sdE2/plan9
+no plan9 partition table found
+fossil 624956068
+arenas 3124780340
+isect 156239018
+bloom 1048573
+
+<mycroftiv> joe9: however big the bloom filter is, it all gets loaded into ram, the partitioner caps it at 512mb but im pretty sure it will allocate that full 512mb by default on a hdd as large as you are using
+Hence, use the partition sizes reported by the p command of disk/prep to change the bloom to 64mb.
+On the 2TB disk, disk/prep reported:
+
+  empty                    0 2             (2 sectors, 1.00 KB)
+  fossil                   2 624956070     (624956068 sectors, 298.00 GB)
+  arenas           624956070 3749736410    (3124780340 sectors, 1.45 TB)
+  isect           3749736410 3905975428    (156239018 sectors, 74.50 GB)
+  bloom           3905975428 3907024001    (1048573 sectors, 511.99 MB)
+  empty           3907024001 3907024002    (1 sectors, 512 B )
+
+Using the above sizes and restricting bloom to 64m, I came up with the below
+echo 'a fossil 2 2+298g
+a bloom . .+64m
+a isect . .+75g
+a arenas . $-1
+w
+p
+q' | disk/prep -b  /dev/sdE2/plan9
+
+using cryptsetup on /dev/sdE2/fossil, /dev/sdE2/arenas, /dev/sdE2/isect:
+	# From http://fqa.9front.org/fqa4.html , bottom of the page: format the partitions
+	disk/cryptsetup -f /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect
+        # use this command to figure out the ctl activation commands. Use this when starting up the disk server:
+	disk/cryptsetup -o /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect
+
+venti setup:
+	venti/fmtarenas arenas-sdE2 /dev/fs/arenas-sdE2
+	venti/fmtisect isect-sdE2 /dev/fs/isect-sdE2
+	venti/fmtindex /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
+	venti/conf -w /dev/fs/arenas-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
+        venti/venti -c /dev/fs/arenas-sdE2
+        venti=192.168.0.5
+
+fossil setup:
+        fossil/flfmt /dev/fs/fossil-sdE2
+        # also, creating the root directory in /n/fossil here to avoid having to do it later
+        # in this instance, it is backups-sdE2
+        fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/initfossil.conf
+        fossil/fossil -f /dev/fs/fossil-sdE2
+        # for automatic snapshots at 0500, add this to the below fossil.conf: fsys main snaptime -a 0500
+	fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/fossil.conf
+        ls /srv
+        mount -c /srv/fossil-sdE2 /n/fossil-sdE2
+
+disk server startup:
+        # do not need these commands: diskparts does it.
+        #  disk/fdisk -p /dev/sdE2/data > /dev/sdE2/ctl
+        #  disk/prep -p /dev/sdE2/plan9 > /dev/sdE2/ctl
+
+        # added these to /cfg/$sysname/termrc of cirno (my disk server)
+	# activate the cryptsetup partitions, the echo command is from the above disk/cryptsetup -o
+	echo 'crypt fossil-sdE2 /dev/sdE2/fossil 4ED863CA244CAD00FDDBA6A9EC8774A627389E509DA7F8BB2253331B80D17D05'>>/dev/fs/ctl
+	echo 'crypt arenas-sdE2 /dev/sdE2/arenas 314E6D9E4815054E156B811E712BFC4E57D3C829B9D283DE43B2E9EDFFD224F1'>>/dev/fs/ctl
+	echo 'crypt isect-sdE2 /dev/sdE2/isect 69E1E73B3E9FB9D674C2103E1C23659A590A8FEB6424E18AFF0E945F9292142B'>>/dev/fs/ctl
+        venti=192.168.0.5
+        venti/venti -c /dev/fs/arenas-sdE2
+        fossil/fossil -f /dev/fs/fossil-sdE2
+        ls /srv
+        mount -c /srv/fossil-sdE2 /n/fossil-sdE2
+
+drawterm startup (can add this to profile):
+        ls /srv
+        mount -c /srv/fossil-sdE2 /n/fossil-sdE2
+
+to stop the fossil and venti servers (added to fshalt by the above patch):
+        venti/sync
+        echo fsys all halt >>/srv/fscons-sdE2
+
+
+create a root directory in /n/fossil to use:
+<mycroftiv> fsys main create active/backups username username d775, gotta specify uid and gid   [19:36]
+<mycroftiv> you use the /srv/fscons
+<mycroftiv> its like con /srv/fscons, type commands, then ctrl-backslash q
+<joe9> cool, That worked.
+
+:glenda@cirno:/srv; con /srv/fscons
+prompt: fsys main create active/backups glenda glenda d775
+prompt: >>> q
+:glenda@cirno:/srv; cd /n/fossil
+
+
+<mycroftiv> do you understand how to trigger snapshots and how to access the archival
+            dump?  [19:41]
+<joe9> I am reading up the manpages . snaptime for automatic  [19:42]
+<mycroftiv> yeah, you can also make a snapshot whenever you want, by connecting to the
+            fscons and doing fsys main snap - a  [19:43]
+<mycroftiv> when it completes, it will print the rootscore of that snapshot
+<mycroftiv> you can also see the msot recent snapshot rootscore if you have all the
+            fossil commands installed by doing fossil/last /path/to/fossildrive
+<mycroftiv> once you have made snapshots, you can view them by doing something like
+            mount /srv/fossil /n/dump main/archive
+<mycroftiv> the 'archive' is a separate tree that fossil serves containing all the
+            snapshots you have made, organized by date  [19:47]
+<mycroftiv> you can also access them by storing the rootscores i mentioned earlier,
+            and putting the output of a fossil/last command into a file called like
+            foo.vac and using vacfs foo.vac to access it  [19:48]
+
+
+<joe9> I can get the /n/fossil/backups show up in my serial console (booting 9front on
+       serial console)  [19:44]
+<joe9> but, with drawterm, I see /n/fossil but nothing below that.
+<mycroftiv> thats just a namespace issue im sure  [19:45]
+<mycroftiv> drawterm in and do mount -c /srv/fossil /n/fossil
+<mycroftiv> your /lib/namespace file doesnt have that mount in it, and when you
+            drawterm in you get a new namespace created from what it says in that file
+<mycroftiv> you could also add the mount command to your profile, which is also run
+            when you drawterm in, as an alternate method  [19:46]
+<joe9> cool, that worked. Thanks.
+
+<mycroftiv> so you want like srv -p fscons.diskA, srv -A fossil.diskA for one, and
+            diskB for those parameters with the other, i think you get it
+<mycroftiv> each fossil will have its own fscons that only knows about that one
+<mycroftiv> and all the mount commands, etc will be separate  [19:53]
+<mycroftiv> and there will be two sets of fossil processes running
+<mycroftiv> similarly with venti, and if this is on the same machine, youll obviously
+            have to give them different ports to listen and communicate on  [19:54]
+<mycroftiv> so one would be using 17034 for venti data and 8000 for the http
+            interface, and the other would be on 17035 and 8001
+<mycroftiv> with the fossils configured to know which one they are supposed to talk to
+<mycroftiv> then you could use the wrarena/backup stuff we discussed earlier to have
+            them synchronize what data is available in each  [19:55]
+[mycroftiv]
+
+<joe9> btw, why is the http port needed?  [19:57]
+<joe9> or, is it mandatory?  [19:58]
+<joe9> I started mine without it and it seemed to startup.
+<mycroftiv> its how you control venti and get meta-information out of it
+<mycroftiv> and it is probably using the default port
+<mycroftiv> i forget if it defaults to using :8000 if you dont specify anything
+<mycroftiv> but for instance if you want to do what i was just talking about,
+            synchronize the data between ventis, the only way you cna find out the
+            information you need about what blocks are written to copy is using that
+            port  [19:59]
+<mycroftiv> you also kind of need that port to do the fshalt routines safely, because
+            it talks on that port to tell venti to make sure to sync to disk
+<joe9> I tried mothra <ip>:8000 and it says bad url  [20:00]
+<mycroftiv> did you put the http:// first?
+<mycroftiv> you can use netstat -n to see if anything is listening on that port, also
+                                                                                [20:01]
+<joe9> no, I just did it with http:// and it says No status connection refused.
+<mycroftiv> so it probably does need to be specifified
+<joe9> ok, will do that.
+<joe9> btw, how do you pick the port numbers for venti (start from 17034 and keep
+       incrementing for additional servers)?  [20:03]
+<mycroftiv> 17034 is the default, its entirely up to you what port numbers you use
+<joe9> I agree. Just want to check if there is a convention that you use.  [20:04]
+<mycroftiv> i only run one venti per box and get my redundancy through multiple nodes
+            so that issue never realy comes up for me
+<mycroftiv> knowing me, id probably use 17034 and 27034 because when i do have
+            multiple copies of a service, i usually do it that way, but its obviously
+            just convention  [20:06]
+<joe9> that is actually a pretty good idea. and you can patternmatch it using [12]7034
+                                                                                [20:10]
+
+port for venti
+:glenda@cirno:/lib/ndb; grep venti /lib/ndb/common
+tcp=venti port=17034
+
+TODO:
+stop venti
+cryptsetup
+multiple disks
