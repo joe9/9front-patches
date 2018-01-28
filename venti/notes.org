@@ -107,7 +107,7 @@ drawterm startup (can add this to profile):
         ls /srv
         mount -c /srv/fossil /n/fossil
 
-to stop the fossil and venti servers:
+to stop the fossil and venti servers (added to fshalt by the above patch):
         venti/sync
         echo fsys all halt >>/srv/fscons
 
