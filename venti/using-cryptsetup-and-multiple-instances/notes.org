@@ -135,7 +135,6 @@ prompt: >>> q
             and putting the output of a fossil/last command into a file called like
             foo.vac and using vacfs foo.vac to access it  [19:48]
 
-
 <joe9> I can get the /n/fossil/backups show up in my serial console (booting 9front on
        serial console)  [19:44]
 <joe9> but, with drawterm, I see /n/fossil but nothing below that.
