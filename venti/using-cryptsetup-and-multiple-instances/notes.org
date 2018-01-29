@@ -118,6 +118,7 @@ disk server startup:
         fossil/fossil -f /dev/fs/fossil-sdE2
         ls /srv
         mount -c /srv/fossil-sdE2 /n/fossil-sdE2
+        echo 'listen -N tcp!*!564' >>/srv/fscons-sdE2
 
 drawterm startup (can add this to profile):
         ls /srv
