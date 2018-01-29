@@ -265,3 +265,10 @@ sizing bloom partition to 65MB instead of 64MB
 <mycroftiv> might as well, i doubt it will mess anything up to waste that mb  [10:25]
 [mycroftiv]
 
+starting fossil server
+<joe9> but, I am not sure how to figure out the fossil address.
+<joe9> when I do netstat -n, I do not see fossil service running
+<mycroftiv> you need to make fossil start listening in the fscons  [11:33]
+<mycroftiv> thats just like listen tcp!*!564  [11:35]
+<mycroftiv> i think the -N flag would let you connect without auth
+<mycroftiv> you could also run an exportfs listener outside the fossil console, that would work too  [11:36]
