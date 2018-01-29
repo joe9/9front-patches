@@ -272,3 +272,8 @@ starting fossil server
 <mycroftiv> thats just like listen tcp!*!564  [11:35]
 <mycroftiv> i think the -N flag would let you connect without auth
 <mycroftiv> you could also run an exportfs listener outside the fossil console, that would work too  [11:36]
+
+to send fossil commands from linux
+joe9> after I am done copying the files to the 9pfuse mounted directory, I want to tell fossil to do a snapshot.  [13:23]
+<mycroftiv> um what you might be able to do is run an exportfs listener that exports your /srv directory and then just echo to the srv file from linux - never tried that though, but in theory i think it should work  [14:03]
+<joe9> cool, Thanks. will try it after the install
