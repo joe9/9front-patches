@@ -97,6 +97,9 @@ fossil setup:
         # in this instance, it is backups-sdE2
         fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/initfossil.conf
         fossil/fossil -f /dev/fs/fossil-sdE2
+        # add in my users
+        fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/cirno/init-fossil-users.conf
+        fossil/fossil -f /dev/fs/fossil-sdE2
         # for automatic snapshots at 0500, add this to the below fossil.conf: fsys main snaptime -a 0500
 	fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/fossil.conf
         ls /srv
@@ -279,6 +282,7 @@ starting fossil server
 <mycroftiv> you could also run an exportfs listener outside the fossil console, that would work too  [11:36]
 
 to send fossil commands from linux
+https://9p.io/wiki/plan9/9p_services_using_srv,_listen,_exportfs,_import/
 joe9> after I am done copying the files to the 9pfuse mounted directory, I want to tell fossil to do a snapshot.  [13:23]
 <mycroftiv> um what you might be able to do is run an exportfs listener that exports your /srv directory and then just echo to the srv file from linux - never tried that though, but in theory i think it should work  [14:03]
 <joe9> cool, Thanks. will try it after the install
@@ -291,4 +295,22 @@ check the fossil partition size
 <mycroftiv> prompt: fsys main df
 <mycroftiv> 	main: 38,666,240 used + 16,039,813,120 free   [00:38]
 <mycroftiv> = 16,078,479,360 (0.2% used)
+[mycroftiv]
+
+<joe9> mycroftiv: the fossil to venti snapshot process is not that fast. Do you notice it too? It took me an hour to get through 1GB.  [08:25]
+<joe9> it could be the encrypt too that is slowing it down.  [08:30]
+<mycroftiv> i think a lot of that has to be the fs/encrypt layer  [16:34]
+<mycroftiv> snapshot is much faster than that for me
+<mycroftiv> not blazing speed, but 1gb would be more like 10 min rather than an hour  [16:35]
+<joe9> I read through the nemo book about factotum and authsrv. I want to enable user permission checking when I mount the fossil+venti on linux.  [18:29]
+<joe9> I would need authsrv on the disk server (not on the linux machine ), correct?
+<joe9> then, I would need factotum running on both the disk server and the linux machine.
+<joe9> but, I cannot figure out how the keys should be setup on each machine. Just want to check if you have any notes or observations about that.  [18:30]
+<mycroftiv> theres kind of a meta-issue
+<joe9> I understand the uname and users and groups in fscons
+<mycroftiv> p9p factotum only does old p9sk1 auth, not dp9ik
+<mycroftiv> and p9sk1 is not actually secure any more  [18:31]
+<mycroftiv> so if you are looking for a setup that is actually secure against untrusted/potentially malicious people on the network, p9sk1 just doesnt cut it
+<mycroftiv> you can say its 'better than nothing' which is true, but you should be aware of this before possibly making use of it  [18:33]
+<joe9> ok, Thanks.  [19:52]
 [mycroftiv]
