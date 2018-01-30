@@ -1,9 +1,11 @@
 fsys main config /dev/fs/fossil-sdE2
 fsys main open -AWPV
 fsys main
-create /active/adm adm sys d775
-create /active/adm/users adm sys 664
-create /active/usr glenda glenda d775
 users -w
+uname adm +glenda
+uname users :1000
+uname joe :1001
+uname users +joe
+create /active/usr/j 1001 1001 d700
 srv -p fscons-sdE2
 srv -A fossil-sdE2

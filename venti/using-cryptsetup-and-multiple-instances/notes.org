@@ -36,43 +36,47 @@ installing fossil
 	cd /mnt/term/home/j/dev/apps/plan9/custom/src/fossilnewventi/
         INSTALL
 
-configuring fossil+venti
+configuring crypt+fossil+venti
     # disk to be used: WD Green 2 TB - sdE2 -- venti + fossil daily backup
     # delete any existing partition on sdE2, using disk/fdisk /dev/sdE2/data, d p1, w, q
 
-disk/mbr /dev/sdE2/data
-disk/fdisk -baw /dev/sdE2/data
-ls /dev/sdE2
-/dev/sdE2/ctl
-/dev/sdE2/data
-/dev/sdE2/plan9
-/dev/sdE2/raw
-disk/prep -w -b -a^(fossil arenas bloom isect) /dev/sdE2/plan9
-no plan9 partition table found
-fossil 624956068
-arenas 3124780340
-isect 156239018
-bloom 1048573
+        disk/mbr /dev/sdE2/data
+        disk/fdisk -baw /dev/sdE2/data
+        ls /dev/sdE2
+        /dev/sdE2/ctl
+        /dev/sdE2/data
+        /dev/sdE2/plan9
+        /dev/sdE2/raw
+        disk/prep -w -b -a^(fossil arenas bloom isect) /dev/sdE2/plan9
+        no plan9 partition table found
+        fossil 624956068
+        arenas 3124780340
+        isect 156239018
+        bloom 1048573
 
-<mycroftiv> joe9: however big the bloom filter is, it all gets loaded into ram, the partitioner caps it at 512mb but im pretty sure it will allocate that full 512mb by default on a hdd as large as you are using
-Hence, use the partition sizes reported by the p command of disk/prep to change the bloom to 64mb.
-On the 2TB disk, disk/prep reported:
+        <mycroftiv> joe9: however big the bloom filter is, it all gets loaded
+        into ram, the partitioner caps it at 512mb but im pretty sure it will
+        allocate that full 512mb by default on a hdd as large as you are using
+        Hence, use the partition sizes reported by the p command of disk/prep
+        to change the bloom to 64mb.
 
-  empty                    0 2             (2 sectors, 1.00 KB)
-  fossil                   2 624956070     (624956068 sectors, 298.00 GB)
-  arenas           624956070 3749736410    (3124780340 sectors, 1.45 TB)
-  isect           3749736410 3905975428    (156239018 sectors, 74.50 GB)
-  bloom           3905975428 3907024001    (1048573 sectors, 511.99 MB)
-  empty           3907024001 3907024002    (1 sectors, 512 B )
+        On the 2TB disk, disk/prep reported:
 
-Using the above sizes and restricting bloom to 64m, I came up with the below
-echo 'a fossil 2 2+298g
-a bloom . .+65m
-a isect . .+75g
-a arenas . $-1
-w
-p
-q' | disk/prep -b  /dev/sdE2/plan9
+        empty                    0 2             (2 sectors, 1.00 KB)
+        fossil                   2 624956070     (624956068 sectors, 298.00 GB)
+        arenas           624956070 3749736410    (3124780340 sectors, 1.45 TB)
+        isect           3749736410 3905975428    (156239018 sectors, 74.50 GB)
+        bloom           3905975428 3907024001    (1048573 sectors, 511.99 MB)
+        empty           3907024001 3907024002    (1 sectors, 512 B )
+
+        Using the above sizes and restricting bloom to 64m, I came up with the below
+        echo 'a fossil 2 2+298g
+        a bloom . .+65m
+        a isect . .+75g
+        a arenas . $-1
+        w
+        p
+        q' | disk/prep -b  /dev/sdE2/plan9
 
 using cryptsetup on /dev/sdE2/fossil, /dev/sdE2/arenas, /dev/sdE2/isect, /dev/sdE2/bloom:
 	# From http://fqa.9front.org/fqa4.html , bottom of the page: format the partitions
@@ -97,7 +101,7 @@ fossil setup:
         # in this instance, it is backups-sdE2
         fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/initfossil.conf
         fossil/fossil -f /dev/fs/fossil-sdE2
-        # add in my users
+        # add in my linux users, ensuring that the uid and gid match with linux uid and gid
         fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/cirno/init-fossil-users.conf
         fossil/fossil -f /dev/fs/fossil-sdE2
         # for automatic snapshots at 0500, add this to the below fossil.conf: fsys main snaptime -a 0500
@@ -148,7 +152,14 @@ to copy data from existing machine to the new fossil system:
         venti/sync
 
 to mount the fossil server on linux using 9pfuse:
-        PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mt-pt
+        PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mnt
+        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
+        TODO how to do this from linux? -- venti/sync
+
+to mount the fossil server on linux using v9fs with permission checking:
+        # where the linux uid = 1001, and the gid = 1000
+        sudo mount -t 9p -o 'trans=tcp,port=564,uname=joe,dfltuid=1001,dfltgid=1000,access=1001' 192.168.0.5 /tmp/mnt
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
@@ -297,11 +308,14 @@ check the fossil partition size
 <mycroftiv> = 16,078,479,360 (0.2% used)
 [mycroftiv]
 
+performance:
 <joe9> mycroftiv: the fossil to venti snapshot process is not that fast. Do you notice it too? It took me an hour to get through 1GB.  [08:25]
 <joe9> it could be the encrypt too that is slowing it down.  [08:30]
 <mycroftiv> i think a lot of that has to be the fs/encrypt layer  [16:34]
 <mycroftiv> snapshot is much faster than that for me
 <mycroftiv> not blazing speed, but 1gb would be more like 10 min rather than an hour  [16:35]
+
+authentication:
 <joe9> I read through the nemo book about factotum and authsrv. I want to enable user permission checking when I mount the fossil+venti on linux.  [18:29]
 <joe9> I would need authsrv on the disk server (not on the linux machine ), correct?
 <joe9> then, I would need factotum running on both the disk server and the linux machine.
@@ -313,4 +327,16 @@ check the fossil partition size
 <mycroftiv> so if you are looking for a setup that is actually secure against untrusted/potentially malicious people on the network, p9sk1 just doesnt cut it
 <mycroftiv> you can say its 'better than nothing' which is true, but you should be aware of this before possibly making use of it  [18:33]
 <joe9> ok, Thanks.  [19:52]
-[mycroftiv]
+
+permissions:
+<joe9> Fish, just want to run this by you. I am mounting the fossil+venti fs on linux. Is there any way to get the linux user permissions and fossil users to work?  [21:01]
+<joe9> for uname, the first field is the uid and the second is the name.
+<joe9> uname glenda glenda  [21:02]
+<joe9> is it a good idea to use the linux uid as the userid and keep the name the same as the linux user name?
+<joe9> I do not like the idea of mounting the fs without any permission checking (-P)
+<joe9> but, not sure if that is the only option.  [21:03]
+<Fish> when you mount with v9fs, you can map local users to fossil users  [02:48]
+<Fish> https://www.kernel.org/doc/Documentation/filesystems/9p.txt  [02:50]
+<Fish> uname=glenda
+<Fish> mount -t 9p -o tcp,trans=tcp,uname=glenda,port=1234 1.2.3.4 /n/fossil_mounted_as_glenda  [02:51]
+<Fish> and if you want authentication as well, you have to authenticate with factotum first
