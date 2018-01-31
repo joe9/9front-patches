@@ -16,6 +16,123 @@ dist-venti-bloom 	/sys/lib/dist/pc/inst 	Add Venti Bloom filter configuration. 	
 <mycroftiv> you dont need that bloom filter config, that is for making the installer
             set up bloom filter when it is doing a clean system install
 
+from https://marc.info/?l=9fans&m=140234533706362&w=2
+> Other things to note:
+>
+> - make sure you mirror or backup the venti disk or else you
+>   may lose the only copy of a block!
+> - performance will likely be poor. For better performance you
+>   may want to keep venti index on a separate (flash) disk.
+
+from https://marc.info/?l=9fans&m=140221685729283&w=2
+> if you have big files you don't want to keep in venti use chmod -t on them
+> to stop archiving (keep the file in fossil only). This means they are not backed up
+> in venti but I find it helpful for things like downloaded ISO files where they
+> can be easily regenerated.
+
+for venti status: hget http://ventiserver/storage
+
+from https://marc.info/?l=9fans&m=136327650812842&w=2
+Well. Venti does block-level deduplication. If you have 100 MB of data
+in dir A and move it to dir B, you're not going to duplicate that storage
+(you'll get new blocks for the directory, of course, but that's both
+minimal and unavoidable).
+
+from https://marc.info/?l=9fans&m=132680552426120&w=2
+> So it seems sufficient to backup my arenas, am I
+> right?
+Yes, exactly, I haev done this several times.
+It might take a few hours and some studying of manuals
+but the arenas are all you need.
+
+from https://marc.info/?l=9fans&m=132680563426154&w=2
+> I've backed up all my *active* arenas in to another disk, just to be
+> safe. The man page says that the index and the bloom filter may be
+> rebuilt if lost. So it seems sufficient to backup my arenas, am I
+> right?
+Yes, you can rebuild the index and the Bloom filter
+with 'venti/buildindex -b'.
+
+David du Colombier's backup process
+      https://marc.info/?l=9fans&m=147750604517288&w=2
+
+from https://marc.info/?l=9fans&m=132579812309672&w=2
+If fossil is setup to dump to venti then it needs venti to
+work at all. Fossil is a write cache, so, just after the dump
+at 4am fossil is empty and consists only of a pointer to the
+root of the dump in venti; all reads are then satisfied from
+venti alone, until some data is written.
+
+from https://marc.info/?l=9fans&m=132568421404140&w=2
+Don't forget you can always grow your venti by adding more arenas
+partitions. More indexes can be added also - rebuilt from your
+existing arena partitions).
+Even fossil can be grown though you will need a new bigger
+partition or grow the existing one using fs(3), this can then
+be refreshed from a venti snapshot.
+
+from https://marc.info/?l=9fans&m=132489954630387&w=2
+Fossil is a write cache for venti - "the blocks in the archival
+snapshots are moved to Venti". Read requests are proxied for venti.
+Recovery means initializing the filesystem using the given vac scrore,
+with no implied data transfer - blocks are copied-on-write.
+
+from https://marc.info/?l=9fans&m=131314281221012&w=2
+>Remove -V to open and srv if needed, then
+>add the following line to enable automatic
+>snapshots:
+>
+>fsys main snaptime -s 60 -a 0530 -t 2880
+>
+>(snapshot at 05:30, temporary snapshot each
+> hour and discarded after two days)
+
+below is irrelevant - bug fixed long time ago
+from https://marc.info/?l=9fans&m=131307665628025&w=2
+> Beware: there is currently a bug in fossil which can cause
+> it to deadlock under load if ephemerial snapshots are enabled.
+>
+> This I reccomend you use a configuration more like:
+>
+> 	fsys main snaptime -s none -a 0530 -t none
+<joe9> https://marc.info/?l=9fans&m=131334453728485&w=2 Do you know if this bug has been fixed? Or, is it recommended not to bother with ephemeral snapshots still.  [13:13]
+<Fish> I fixed it few days after this message  [14:19]
+<Fish> richard miller and I fixed all the known fossil issues in 2011
+
+David's setup
+<joe9> the 80GB disks, I have them mirrored using mkfs. They do not change much other than when I do an upgrade or some such.  [11:26]
+<Fish> I usually set up five disks  [11:27]
+<Fish> 0 is an SSD with fossil for the system
+<Fish> 1 is fossil for the storage
+<Fish> 2 is venti index + bloom  [11:28]
+<Fish> 3 and 4 are venti arenas, mirrored
+<Fish> and this setup is itself mirrored on another machine
+<Fish> I've also a fossil on the other machine, but it's not set up
+<Fish> it's just in case the first machine burn, so I can quickly switch to the new machine
+<Fish> index is 1/20 of arenas I think
+<Fish> for the bloom, I always set it to its maximum value : 512 MB  [12:30]
+<Fish> disk 1 only contains the fossil partition, so it contains no data (the data are on venti)
+<Fish> and disk 2 only contains index and bloom, which can be rebuilt anytime
+
+from https://marc.info/?l=9fans&m=130881885622034&w=2 regarding stability
+
+from https://marc.info/?l=9fans&m=129503282218163&w=2
+what i understood the op to mean was that venti arenas are
+garbage collectable.  this is not true.  arenas are write once,
+so it follows they must be impossible to garbage collect.
+venti is the block motel.  blocks check in, but they never check out.
+
+mirror venti to another
+http://www.cespedes.org/blog/90/how-to-mirror-one-venti-to-another
+
+to verifyarena on both.
+
+rebuilding or recovering fossil from venti arenas:
+http://sources.postnix.us/contrib/steve/doc/Venti-rescue.pdf
+
+TODO: have venti use the loopback address
+
+
 installing venti patches (using drawterm)
 
 	cd /
@@ -69,6 +186,10 @@ configuring crypt+fossil+venti
         bloom           3905975428 3907024001    (1048573 sectors, 511.99 MB)
         empty           3907024001 3907024002    (1 sectors, 512 B )
 
+        Need to size these better. Per
+        http://plan9.bell-labs.com/wiki/plan9/Setting_up_Venti/index.html
+        , 5% as much index space as you have arena space.
+
         Using the above sizes and restricting bloom to 64m, I came up with the below
         echo 'a fossil 2 2+298g
         a bloom . .+65m
@@ -87,10 +208,13 @@ using cryptsetup on /dev/sdE2/fossil, /dev/sdE2/arenas, /dev/sdE2/isect, /dev/sd
 	disk/cryptsetup -i /dev/sdE2/fossil /dev/sdE2/arenas /dev/sdE2/isect /dev/sdE2/bloom
 
 venti setup:
+      formatting
 	venti/fmtarenas arenas-sdE2 /dev/fs/arenas-sdE2
 	venti/fmtisect isect-sdE2 /dev/fs/isect-sdE2
 	venti/fmtbloom /dev/fs/bloom-sdE2
+      initialize venti index sections
 	venti/fmtindex /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
+      configure
 	venti/conf -w /dev/fs/arenas-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/venti.conf
         venti/venti -c /dev/fs/arenas-sdE2
         venti=192.168.0.5
@@ -346,3 +470,73 @@ permissions:
 <Fish> uname=glenda
 <Fish> mount -t 9p -o tcp,trans=tcp,uname=glenda,port=1234 1.2.3.4 /n/fossil_mounted_as_glenda  [02:51]
 <Fish> and if you want authentication as well, you have to authenticate with factotum first
+
+backup
+from https://marc.info/?l=9fans&m=115697470118616&w=2
+<mycroftiv> i am talking about the backup systems you are investigating
+<mycroftiv> not how the disks are partitioned and set up
+<mycroftiv> what i believe is the best system if you have the resources available for
+            it is based on /sys/src/cmd/venti/words/backup.example   [14:56]
+<mycroftiv> ive modified that into my 'ventiprog' script and combined it with a system
+            for tracking and storing fossil rootscores  [14:57]
+<joe9> your setup makes sense and is the way to go.  [14:58]
+<joe9> I do not have multiple machines yet and am just trying to mirror disks on the
+       same machine.
+<joe9> I could use wrarena and multiple venti servers.
+<joe9> but, it might be easier to replicate the venti arenas and not worry about the
+       fossil, index, etc.  [14:59]
+<mycroftiv> you could make it so that you only 'activate' the 2nd venti server for the
+            purpose of making your dialy backup, then kill it off
+<joe9> yes, that is an option too.
+<mycroftiv> you definitely dont want to replicate the fossil, you just want to track
+            the rootscores
+<mycroftiv> if you really just want to backup the arenas data, you should almost
+            certainly use rdarena and not mirrorarenas  [15:00]
+<joe9> I got that idea from this https://marc.info/?l=9fans&m=147750604517288&w=2
+<joe9> and http://www.cespedes.org/blog/90/how-to-mirror-one-venti-to-another  [15:01]
+<mycroftiv> but if youd like any 'recovery' process to be completely painless, using a
+            2nd venti server (even if it is only running briefly) and progressive
+            backup with wrarena makes things much easier
+<joe9> I agree, using a 2nd venti server makes the recovery painless.
+<joe9> no doubt about it.
+<mycroftiv> that second link is not very good, the first is good  [15:02]
+<mycroftiv> the second has some misunderstandings of how rdarena/wrarena work  [15:03]
+<joe9> ok, Thanks.
+<mycroftiv> in fact to copy one venti to another, you dont need rdarena at all, and
+            you dont need to stop the servers at all
+<mycroftiv> if you want to just back up arenas to static data files, use rdarena
+<mycroftiv> if you want an instantly usable backup with minimal hassle, use wrarena to
+            a running duplicate venti server with a system which tracks already
+            written information so only copies new data  [15:05]
+<mycroftiv> also make a system to track and preserve your fossil rootscores  [15:06]
+<mycroftiv> those *can* be recovered from the venti data, but it is additional hassle
+<mycroftiv> perhaps in your case it is easier to just use rdarena to dump arenas data
+            to the backup drive, that just means that your recover process will be
+            more elaborate compared to wrarena to a running backup venti  [15:09]
+[mycroftiv]
+
+
+<joe9> I like your approach of using venti/mirrorarenas to mirror the arenas to a different disk. But, I cannot find more details or help on
+       venti/mirrorarenas. http://www.cespedes.org/blog/90/how-to-mirror-one-venti-to-another is the only information I could find it.  [14:39]
+<joe9> The article talks about stopping the venti server whereas your email message made no mention of it https://marc.info/?l=9fans&m=147750604517288&w=2
+<joe9> Just want to check how often you run the mirrorarenas? and, how you schedule it?  [14:40]
+<Fish> it's quite easy  [15:03]
+<Fish> just run venti/mirrorarenas /dev/sdE0/arenas /dev/sdE1/arenas
+<Fish> and it will copy /dev/sdE0/arenas to /dev/sdE1/arenas
+<Fish> this main drawback of this approach is that you need 2 identical arenas partitions
+<Fish> I run venti/mirrorarenas in a cron job started every night  [15:04]
+<joe9> Do you have to stop the venti service while running the mirror arenas?  [15:05]
+<Fish> no
+<joe9> ok, Thanks.
+<Fish> you can even be writting on venti when it happens, it doesn't matter
+<Fish> venti is append-only anyway, so it's always self-consistent  [15:06]
+<joe9> to setup the second disk /dev/sdE1/arenas, it is just this command, correct? 	venti/fmtarenas arenas-sdE3 /dev/fs/arenas-sdE3  [15:07]
+<joe9> s/sdE3/sdE1/  [15:08]
+<joe9> the venti conf (which is irrelevant unless it is used to start a server) would the same as that on /dev/sdE0 except for 'arenas /dev/sdE1/arenas'
+<joe9> venti/fmtarenas arenas-sdE3 /dev/fs/arenas-sdE3 -- using fs in this command as I am using cryptsetup, else, it would be /dev/sdE1/arenas  [15:12]
+<Fish> I'm not sure "arenas-sdE3" is right, I think the arenas should be named the same as the partition you're mirroring from  [15:14]
+<joe9> got it. my bad. Thanks.
+<joe9> Do you bother with cryptsetup (specifically on the venti arenas)?  [15:17]
+<Fish> I never tried cryptsetup with venti  [15:19]
+<Fish> I leave my venti partitions unencrypted
+
