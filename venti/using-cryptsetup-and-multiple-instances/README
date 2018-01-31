@@ -164,6 +164,12 @@ to mount the fossil server on linux using v9fs with permission checking:
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
 
+to run the fossil snapshot
+    joe9> Fish, this works, just want to run this by you: on the 9front machine:
+    aux/listen1 -tv tcp!*!1000 /bin/rc -xv -c 'venti/sync; /bin/echo fsys all snap -a >>/srv/fscons-sdE1'
+    <joe9> on linux, echo "junk string" | socat STDIN TCP4:cirno:1000
+    <joe9> not sure if there is a better way of going about it.  [15:09]
+
 to see the size of the fossil disk partition
         con /srv/fscons-sdE2
         fsys main df
@@ -296,7 +302,7 @@ to send fossil commands from linux
 https://9p.io/wiki/plan9/9p_services_using_srv,_listen,_exportfs,_import/
 joe9> after I am done copying the files to the 9pfuse mounted directory, I want to tell fossil to do a snapshot.  [13:23]
 <mycroftiv> um what you might be able to do is run an exportfs listener that exports your /srv directory and then just echo to the srv file from linux - never tried that though, but in theory i think it should work  [14:03]
-<joe9> cool, Thanks. will try it after the install
+ <joe9> cool, Thanks. will try it after the install
 
 check the fossil partition size
 <joe9> mycroftiv: how do you check the size used by fossil? I tried echo fsys all df | con -l /srv/fscons-sdE2 and also echo fsys all df >>/srv/fscons-sdE2  [23:37]
