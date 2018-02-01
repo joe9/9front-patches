@@ -130,9 +130,6 @@ to verifyarena on both.
 rebuilding or recovering fossil from venti arenas:
 http://sources.postnix.us/contrib/steve/doc/Venti-rescue.pdf
 
-TODO: have venti use the loopback address
-
-
 installing venti patches (using drawterm)
 
 	cd /
@@ -283,7 +280,7 @@ to mount the fossil server on linux using 9pfuse:
 
 to mount the fossil server on linux using v9fs with permission checking:
         # where the linux uid = 1001, and the gid = 1000
-        sudo mount -t 9p -o 'trans=tcp,port=564,uname=joe,dfltuid=1001,dfltgid=1000,access=1001' 192.168.0.5 /tmp/mnt
+        sudo mount -t 9p -o 'trans=tcp,port=564,uname=joe,dfltuid=1001,dfltgid=1000,access=1001' 192.168.0.5 /home/j/fossil-backups
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
@@ -540,3 +537,18 @@ from https://marc.info/?l=9fans&m=115697470118616&w=2
 <Fish> I never tried cryptsetup with venti  [15:19]
 <Fish> I leave my venti partitions unencrypted
 
+
+to change the permissions of a directory from fossilconsole
+:glenda@cirno:/usr/glenda; con /srv/fscons-sdE2
+prompt: fsys main stat /active/usr/j
+	stat /active/usr/j j 101 101 d700 0
+prompt: fsys main wstat
+usage: [fsys name] wstat file elem uid gid mode length
+	use - for any field to mean don't change
+prompt:  fsys main wstat /active/usr/j - - - d775 -
+	old: wstat /active/usr/j j 101 101 d700 0
+	new: wstat /active/usr/j j 101 101 d775 0
+prompt: fsys main stat /active/usr/j
+	stat /active/usr/j j 101 101 d775 0
+prompt: attach main as joe: allowing as none
+attach main as joe: allowing as none
