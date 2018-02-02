@@ -677,3 +677,60 @@ uname [user] [user]
 uname sys +[user]
 
 https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9port
+
+connecting from plan9port
+<joe9> Fish, I cannot get the fossil authentication to work with
+       plan9port/bin/srv for my user.
+<Fish> how do you use srv?  [15:41]
+<Fish> you have to used factotum + srv -a to authenticate
+<Fish> srv -a -k user=<user> <addr>
+<Fish> 9mount -i unix\!$(namespace)/<addr> <mnt>  [15:43]
+<joe9> Fish, this authenticates fine  [15:44]
+<joe9> PLAN9=/home/j/dev/apps/plan9/plan9port
+       PATH=$PATH:/home/j/dev/apps/plan9/plan9port/bin
+       /home/j/dev/apps/plan9/plan9port/bin/srv -a -k user=glenda cirno:20564 fossil
+<joe9> whereas this fails:
+<joe9> PLAN9=/home/j/dev/apps/plan9/plan9port
+       PATH=$PATH:/home/j/dev/apps/plan9/plan9port/bin
+       /home/j/dev/apps/plan9/plan9port/bin/srv -a -k user=joe cirno:20564 fossil
+<joe9> /home/j/dev/apps/plan9/plan9port/bin/srv: authproxy: auth_proxy rpc: p9any
+       client get tickets: p9sk1: gettickets: unknown host 9front
+<joe9> this http://okturing.com/src/2150/body  is from /lib/ndb/local  [15:45]
+<joe9> I see the 'unknown host 9front' even when the user is glenda, but, it still
+       authenticates.
+<Fish> because glenda is root
+<joe9> It fails when the user is joe though
+<Fish> you didn't set ndb properly
+<joe9> as an fyi, this is the full /lib/ndb/local http://okturing.com/src/2151/body
+<joe9> what am I missing?
+<Fish> you have to add a line "authdom=9front host=1.2.3.4" in you client's ndb
+<Fish> otherwise, factotum couldn't figure what authentication server to call  [15:47]
+<Fish> it works with glenda because it's obviously hostowner, so it bypasses the
+       authentication server
+<joe9> where is the 'client's ndb'? on the linux machine?
+<Fish> $PLAN9/ndb
+<joe9> oh, cool. That makes perfect sense.  [15:48]
+<Fish> or, alternatively, make "9front" resolvable
+<joe9> when you say $PLAN9, do you mean the 9front machine?  [15:50]
+<joe9> I presume you mean where the plan9port is running, correct?
+<Fish> yes
+<Fish> usually /usr/local/plan9/ndb/local
+<Fish> (I said $PLAN9/lib/ndb, but it's $PLAN9/ndb)
+<Fish> $PLAN9/ndb/local
+<joe9> oh, that i find.
+<joe9> thanks
+<joe9> cool, That worked. YOU ARE A GOD  [15:52]
+<joe9> I am using factotum -Dd -a 192.168.0.5 -n , where 192.168.0.5 is the 9front
+       machine which also has the authentication server. That machine had the authdom
+       and auth set correctly.  [15:57]
+<joe9> factotum still looks in the client ndb for the authentication server instead of
+       using the -a provided authentication server
+<joe9> is that expected?
+<joe9> just trying to understand now that it works.  [15:58]
+<Fish> you don't really need "-a"
+<Fish> I suppose factotum tries the different options in a specific order  [16:01]
+<Fish> which is something like
+<Fish> 1. resolve dns
+<Fish> 2. look ndb
+<Fish> 3. use -a
+<Fish> if it always used -a, it wouldn't be very practical to use
