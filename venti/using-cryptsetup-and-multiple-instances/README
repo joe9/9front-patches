@@ -246,6 +246,7 @@ disk server startup:
         fossil/fossil -f /dev/fs/fossil-sdE2
         ls /srv
         mount -c /srv/fossil-sdE2 /n/fossil-sdE2
+        # or, add the below to fossil.conf
         echo 'listen -N tcp!*!564' >>/srv/fscons-sdE2
 
 drawterm startup (can add this to profile):
@@ -273,6 +274,7 @@ to copy data from existing machine to the new fossil system:
         venti/sync
 
 to mount the fossil server on linux using 9pfuse:
+        use -a main to see the snapshots (the whole tree)
         PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mnt
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
@@ -284,6 +286,11 @@ to mount the fossil server on linux using v9fs with permission checking:
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
+
+to get user authentication to work
+   1. convert the terminal to cpu
+   2. remove -N flag in /rc/bin/service.auth/tcp567 to enable p9sk1 to work
+   3.
 
 to run the fossil snapshot
     joe9> Fish, this works, just want to run this by you: on the 9front machine:
@@ -456,6 +463,7 @@ authentication:
 <joe9> ok, Thanks.  [19:52]
 
 permissions:
+check for details https://github.com/9fans/plan9port/issues/96
 <joe9> Fish, just want to run this by you. I am mounting the fossil+venti fs on linux. Is there any way to get the linux user permissions and fossil users to work?  [21:01]
 <joe9> for uname, the first field is the uid and the second is the name.
 <joe9> uname glenda glenda  [21:02]
@@ -552,3 +560,120 @@ prompt: fsys main stat /active/usr/j
 	stat /active/usr/j j 101 101 d775 0
 prompt: attach main as joe: allowing as none
 attach main as joe: allowing as none
+
+
+removing users
+from https://marc.info/?l=9fans&m=111558888121662&w=2
+
+If you're running dumps, it's not a good idea to remove
+users -- their ids will still be found looking in the dump.
+
+You can rename the uname with 'uname old %new' but
+you shouldn't get rid of the uid.
+
+> so i should rename them all to some null user which is unable to log in?
+
+Don't rename them all to the same thing.
+That will just confuse you later.  We don't
+ever remove people -- we just turn off their
+accounts on the auth server.
+
+We had a spell where we renamed foo to usedtobefoo,
+but we've basically given up on that too.
+
+removing users is always a bad idea.  once you blow them away you have
+lost the trace of who they were, what they did and what they might be doing.
+
+they should always be retired;  turn off their access but leave their
+'existance' alone.
+
+from https://marc.info/?l=9fans&m=111558888221673&w=2
+the format of users file is:
+
+	id:name:[leader]:[members[,members]]
+
+	id is what is used to store in the file system
+	name is what the outside world (9p) sees and deals with
+	leader is the group leader (may be nil)
+	members is a comma-separated list of who is in the group
+
+a check is made when the users file is read by the server that
+there is only one id<->name mapping.
+
+so, say we have
+	bob:bob::
+and create some files. these files are on permanent storage in the
+back end (venti, the original standalone fs, whatever) and the id 'bob'
+is tied to those files irrevocably.
+
+if bob leaves, we just need to turn off his ability to authenticate
+to the server, there's no real need to remove his files and, in fact, those
+files of his in the dump cannot be changed or removed.
+
+the idea is that if a new bob arrives we can still give him the name bob
+by changing the old bob entry to
+	bob:bobwholeft::
+(this is accomplished by using the 'uname' command in fossilcons(8), e.g.
+	uname bob %bobwholeft
+)
+and then making a new entry
+	newbob:bob::
+via
+	uname bob newbob
+
+but there no way the new bob can access the old bob's files as they
+are stored under different ids.
+
+more fossil documentation
+from https://marc.info/?l=9fans&m=111558922526314&w=2
+wiki is at https://9p.io/wiki/plan9/plan_9_wiki/
+wiki index https://9p.io/wiki/plan9/Wiki_index/index.html
+old wiki https://9p.io/wiki/plan9/Old_wiki_pages/index.html
+
+
+user authentication
+from http://fqa.9front.org/fqa7.html#7.1.2
+Note: Users seeking access to the file server must be added as a user
+ on the file system itself, and, if auth is enabled, added to the auth
+ server’s user database.
+remove -N flag in /rc/bin/service.auth/tcp567 to enable p9sk1 to work
+<joe9> just want to run this by you. For having a proper permission checking and
+       authentication to work with fossil, the user needs to be setup in the
+       authentication server too and the user (from plan9port) should be using
+       factotum to authenticate. correct?  [11:06]
+<joe9> I can always use none and disable permission checking, etc.
+<joe9> but, the proper way is to use the authentication server + factotum + fossil
+       user, correct?
+<mycroftiv> yes, and you should make that a 'real' user - the thing where the user
+            just exists in the users table on the file server but doesnt really exist
+            is going to frustrate you  [11:07]
+<joe9> ok, Thanks.
+<mycroftiv> yes you can use plan9port factotum and p9sk1 auth with the plan9 auth
+            server
+<mycroftiv> i think i already explained though that p9sk1 is insecure now
+<mycroftiv> that doesnt mean you 'shouldnt' use it - depends on your situation/threat
+            model etc
+<joe9> makes sense. Thanks.
+<mycroftiv> but using p9sk1 auth between the systems should be thought of as a 'screen
+            door latch' not a secure bank vault door
+<mycroftiv> and also you will have some hassles to deal with
+<mycroftiv> becuase 9front can do p9sk1 auth still, but it is now disabled by default
+<mycroftiv> and working with p9p factotum has its own wrinkles
+<mycroftiv> thats not a setup ive used in quite awhile so i cant help much with it,
+            and i imagine cat-v isnt going to be very helpful about p9sk1 + p9p +
+            fossil setups, that is like 3 things they hate on :)  [11:10]
+<mycroftiv> but trying to get that set up and working is probably a good exercise, id
+            work on it piece by piece  [11:14]
+<mycroftiv> get auth server set up and working with dp9ik, re-enable p9sk1, then bring
+            in p9p factotum
+
+http://wildflower.diablonet.net/~scaron/p9setup.html
+now we are ready to create user accounts. every time we create a user
+the procedure is that we will first add them to the authentication
+system with auth/changeuser, and then add them to the fileserver with
+the commands,
+con -l /srv/fscons
+uname [user] [user]
+uname sys +[user]
+
+https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9port
