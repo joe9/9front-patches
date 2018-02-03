@@ -55,6 +55,64 @@ with 'venti/buildindex -b'.
 
 David du Colombier's backup process
       https://marc.info/?l=9fans&m=147750604517288&w=2
+> I see several threads about how people are cloning their Venti
+> servers to remote Venti servers as a means of creating a backup.
+
+Personally, I use three different ways of replicating the
+content of my Venti file servers.
+
+1. The first method is to use venti/mirrorarenas to replicate
+the content of a Venti arena partition to another hard disk.
+
+venti/mirrorarenas /dev/sdE0/arenas /dev/sdE1/arenas
+
+This method requires two hard disks and two identical arena partitions.
+
+2. The second method is to copy blocks from a Venti arena partition
+to a Venti server running on another machine, accessed through the
+local network.
+
+You'll find an example of script using this method here:
+
+http://9legacy.org/www.9legacy.org/9legacy/tools/backup/readwrite
+
+This method requires another machine running Venti. The partition
+layout could be different and the Venti servers could be running
+on different operating systems.
+
+3. The third method is to copy blocks from a Venti arena partition
+to arena files, using venti/rdarena. Then you can copy the arena files
+to external media like Blu-ray discs or hard disks.
+The restoration is done to a running Venti using venti/wrarena.
+
+You'll find backup and restore script examples here:
+
+http://9legacy.org/www.9legacy.org/9legacy/tools/backup/read
+http://9legacy.org/www.9legacy.org/9legacy/tools/backup/write
+
+This method require external media to store the arena files.
+
+For example, I use all these three methods to replicate the data
+of my main file server. Consequently, the data are replicated on:
+
+ - two machines (automatically)
+ - two hard disks of each machine (automatically)
+ - some external hard disks (manually)
+
+from https://marc.info/?l=9fans&m=141829654013932&w=2
+> I guess there are also people using fossil+venti on
+> p9. Are those happy?
+I'm using Fossil and Venti on Plan 9 and I'm quite happy.
+On my typical setup, I've two arenas partitions mirrored
+on two hard disks using venti/mirrorarenas.
+My main file server is mirrored to another file server
+using venti/wrarena every night.
+I'm regularly dumping arenas to backup hard disks
+and blu-ray using venti/rdarena.
+I don't really store any long-term stuff on my Linux
+machines. I just copy the files to the Plan 9 file
+servers using v9fs.
+
 
 from https://marc.info/?l=9fans&m=132579812309672&w=2
 If fossil is setup to dump to venti then it needs venti to
