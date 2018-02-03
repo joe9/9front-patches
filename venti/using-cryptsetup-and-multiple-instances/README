@@ -292,9 +292,24 @@ to mount the fossil server on linux using v9fs with permission checking:
         TODO how to do this from linux? -- venti/sync
 
 to get user authentication to work
-   1. convert the terminal to cpu
-   2. remove -N flag in /rc/bin/service.auth/tcp567 to enable p9sk1 to work
-   3.
+    1. set service=cpu in plan9.ini, ensure that there is a newline at the end
+    2. startup scripts:
+        cd cirno;
+        cp cpurc /cfg/$sysname/cpurc;
+        cp cpustart /cfg/$sysname/cpustart;
+        cp termrc /cfg/$sysname/termrc
+        cp profile $home/lib/profile
+    3. edit /lib/ndb/local, add auth and authdom
+    7.4.1 - Configuring an auth server
+        add the below line
+            ipnet=9front ip=192.168.0.0 ipmask=255.255.255.0 auth=cirno authdom=9front
+    3. configure nvram (use the same password here and in #4 below)
+        7.3.2 - Configuring nvram
+              auth/wrkey
+    4. add users
+        7.4.2 - Adding users
+            auth/keyfs
+            auth/changeuser glenda
 
 to run the fossil snapshot
     joe9> Fish, this works, just want to run this by you: on the 9front machine:
