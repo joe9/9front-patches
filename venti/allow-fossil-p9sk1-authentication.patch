@@ -1,0 +1,19 @@
+# HG changeset patch
+# User joe
+# Date 1517621848 25200
+#      Fri Feb 02 18:37:28 2018 -0700
+# Node ID cdb37a29d3d1bccac12ed6e9d844e5717b45b1c7
+# Parent  95785cc684a78d28ed3fa141e7a3556cfeb65da1
+get fossil authentication to work
+
+fossil only works with p9sk1
+
+diff -r 95785cc684a7 -r cdb37a29d3d1 rc/bin/service.auth/tcp567
+--- a/rc/bin/service.auth/tcp567	Sun Jan 28 17:22:00 2018 +0100
++++ b/rc/bin/service.auth/tcp567	Fri Feb 02 18:37:28 2018 -0700
+@@ -1,2 +1,4 @@
+ #!/bin/rc
+-exec /bin/auth/authsrv -N $3
++# exec /bin/auth/authsrv -N $3
++# to get p9sk1 to work as fossil needs this
++exec /bin/auth/authsrv $3

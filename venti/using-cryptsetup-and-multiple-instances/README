@@ -136,7 +136,7 @@ installing venti patches (using drawterm)
 	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-noarchive.diff
 	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-redial.diff
 	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-sha1.diff
-	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/start-cfg-sysname-termrc-after-ipconfig.patch
+	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/allow-fossil-p9sk1-authentication.patch
 	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/stop-fossil-venti-servers.patch
 	cd /sys/src/libventi
 	mk clean
@@ -222,7 +222,11 @@ fossil setup:
         # in this instance, it is backups-sdE2
         fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/using-cryptsetup-and-multiple-instances/initfossil.conf
         fossil/fossil -f /dev/fs/fossil-sdE2
-        # add in my linux users, ensuring that the uid and gid match with linux uid and gid
+        # add in my linux users, do not bother with matching the id with the linux uid.
+        # It seems to work with just names on fossil
+        # on linux, uid = 101, name = joe
+        # on 9front fossil, id = joe, name = joe
+        # on 9front authentication server, user = joe
         fossil/conf -w /dev/fs/fossil-sdE2 /mnt/term/home/j/dev/apps/plan9/custom/cirno/init-fossil-users.conf
         fossil/fossil -f /dev/fs/fossil-sdE2
         # for automatic snapshots at 0500, add this to the below fossil.conf: fsys main snaptime -a 0500
@@ -636,7 +640,6 @@ from http://fqa.9front.org/fqa7.html#7.1.2
 Note: Users seeking access to the file server must be added as a user
  on the file system itself, and, if auth is enabled, added to the auth
  server’s user database.
-remove -N flag in /rc/bin/service.auth/tcp567 to enable p9sk1 to work
 <joe9> just want to run this by you. For having a proper permission checking and
        authentication to work with fossil, the user needs to be setup in the
        authentication server too and the user (from plan9port) should be using
@@ -676,9 +679,18 @@ con -l /srv/fscons
 uname [user] [user]
 uname sys +[user]
 
-https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9port
+So, the process described above is:
+1. Add user to authserver:
+   7.4.2 - Adding users from http://fqa.9front.org/fqa7.html#7.4.2
+2. Add user to fossil using the fscons and uname described above
+3. remove -N flag in /rc/bin/service.auth/tcp567 to enable p9sk1 to work
+   if not, this happens when srv tries to connect:
+      plan9port/bin/srv: authproxy: auth_proxy rpc: p9any client get tickets: p9sk1: plan9port gettickets: remote: DES is disabled
+
 
 connecting from plan9port
+https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9port
+
 <joe9> Fish, I cannot get the fossil authentication to work with
        plan9port/bin/srv for my user.
 <Fish> how do you use srv?  [15:41]
