@@ -850,3 +850,22 @@ https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9por
 <joe9> and, when I want just a fossil user without drawterm access, then I do not need
        the user in cwfs.  [17:54]
 <joe9> just fossil and authsrv seem to do the trick.
+
+PLAN9 usage
+<joe9> Fish, just want to bring this to your attention
+       http://okturing.com/src/2153/body  [21:40]
+<joe9> if there is a prefix of PLAN9, srv works fine. If I declare PLAN9 earlier and
+       then run the command without the PLAN9 prefix, it fails
+<joe9> If you think it is a bug, I can add it to plan9port issues.
+<joe9> Fish, not sure if you find this
+       interesting. https://github.com/9fans/plan9port/issues/81  [22:15]
+<joe9> when I mount using 9pfuse and try to chmod, I get this message : chmod:
+       changing permissions of 'test.txt': Numerical result out of range  [22:16]
+<joe9> it works fine when it is mounted with mount -t 9p though.
+<Fish> there is something odd in the way you use PLAN9  [03:19]
+<Fish> you should just export PLAN9 in your .bashrc/.bash_profile/.profile
+<Fish> and add $PLAN9/bin to the end of your path  [03:20]
+<Fish> and be done with it
+<Fish> joe9: that's probably the same issue you get with 9pfuse, you should try to
+       proposed change and let me know if it works  [03:21]
+<joe9> Fish, ok. Thanks.
