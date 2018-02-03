@@ -734,3 +734,31 @@ connecting from plan9port
 <Fish> 2. look ndb
 <Fish> 3. use -a
 <Fish> if it always used -a, it wouldn't be very practical to use
+<joe9> makes sense. Thanks.  [16:03]
+<joe9> when I do the srv with the user=joe .. , it prompts me for the password. Is
+       there any way to avoid the prompt? read it from a file or such?  [16:05]
+<joe9> it does it only for the first time so I presume that it is being cached
+       somewhere.  [16:06]
+<joe9> if I could add it to the cache (with a script), then I would not have to worry
+       about the prompt.
+<joe9> or, I could write an expect script wrapper.
+<joe9> another quick question, for a smooth operation between linux and fossil, would
+       you recommend the uname id of fossil users to be the uid of linux? or, just
+       leave it to be the name?  [16:13]
+<Fish> you should start factotum and fill it from secstore or a file  [16:26]
+<Fish> for example  [16:27]
+<Fish> factotum -n
+<Fish> 9p write -l factotum/ctl < mypasswords
+<Fish> where mypasswords is a file in factotum format filled with "key dom=<domain>
+       proto=p9sk1 role=client user=<user> !password=<password>"  [16:28]
+<Fish> also, if you start factotum, then authenticate, factotum will automatically
+       store the login/password/domain in memory, so it won't be asked again as long
+       as you use the same factotum instance  [16:29]
+<Fish> I use the same login on linux and plan 9, but it don't think it matters much
+<joe9> Thanks
+
+<joe9> There is no need to map the unix user ids
+       to fossil user names. the system is doing the translation.  [17:53]
+<joe9> and, when I want just a fossil user without drawterm access, then I do not need
+       the user in cwfs.  [17:54]
+<joe9> just fossil and authsrv seem to do the trick.
