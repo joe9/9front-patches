@@ -278,6 +278,7 @@ to copy data from existing machine to the new fossil system:
         venti/sync
 
 to mount the fossil server on linux using 9pfuse:
+        9pfuse is more locked down and does not sudo but has issues with chmod, etc.
         use -a main to see the snapshots (the whole tree)
         PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mnt
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
@@ -285,8 +286,10 @@ to mount the fossil server on linux using 9pfuse:
         TODO how to do this from linux? -- venti/sync
 
 to mount the fossil server on linux using v9fs with permission checking:
-        # where the linux uid = 1001, and the gid = 1000
-        sudo mount -t 9p -o 'trans=tcp,port=564,uname=joe,dfltuid=1001,dfltgid=1000,access=1001' 192.168.0.5 /home/j/fossil-backups
+        # sudo mount -t 9p -o 'trans=tcp,port=564,uname=joe,dfltuid=1001,dfltgid=1000,access=1001' 192.168.0.5 /home/j/fossil-backups
+        # below seems to work well
+        # from https://marc.info/?l=9fans&m=149673010624331&w=2
+        sudo mount -t 9p -o unix,trans=unix,uname=$USER,dfltuid=$(id -u),dfltgid=$(id -g) $($PLAN9/bin/namespace)/fossil /home/j/fossil-backups
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
