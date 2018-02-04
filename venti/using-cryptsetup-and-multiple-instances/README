@@ -892,3 +892,12 @@ PLAN9 usage
 <Fish> joe9: that's probably the same issue you get with 9pfuse, you should try to
        proposed change and let me know if it works  [03:21]
 <joe9> Fish, ok. Thanks.
+
+venti/mirrorarenas
+joe9> venti/mirrorarenas seem to be doing all the arenas even though only 1 or 2 are
+       full. Do you run it that way each night? Does it scrub all the data to the new
+       disk, even if there is no data there?  [13:32]
+<joe9> regarding venti/mirrorarenas, it would be a lot of writing to the disk if even
+       the blank arenas are written.
+<Fish> venti/mirrorarenas parse all the arenas, but only copy the filled arenas
+<joe9> ok, Thanks.
