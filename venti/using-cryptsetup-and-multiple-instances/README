@@ -335,8 +335,31 @@ to copy data from existing machine to the new fossil system:
         echo fsys all snap -a >>/srv/fscons-sdE2
         venti/sync
 
+linux setup if you plan on using plan9port to mount the fossil on linux
+    # 9pfuse is more locked down and does not sudo but has issues with chmod, etc.
+    put these in the shell profile:
+    PLAN9=/home/j/dev/apps/plan9/plan9port; export PLAN9
+    PATH=$PATH:$PLAN9/bin; export PATH
+    # ensure that the below line to set authdom and auth is in $PLAN9/ndb/local:
+    authdom=9front auth=cirno
+    # cat mypasswords
+    echo 'key dom=9front proto=p9sk1 role=client user=joe !password=test6666' >mypasswords
+
+to mount the fossil on linux
+    factotum -n
+    9p write -l factotum/ctl <mypasswords
+    # below command does not work without the PLAN9 prefix
+    srv -a -k user=joe cirno:564 fossil
+    namespace
+    # 9pfuse has issues changing permissions, use the patch from
+    # https://github.com/9fans/plan9port/issues/81
+    9pfuse unix\!$(namespace)/fossil /home/j/fossil-backups
+    # or, if you prefer using mount below
+    sudo mount -t 9p -o unix,trans=unix,uname=$USER,dfltuid=$(id -u),dfltgid=$(id -g) $(namespace)/fossil /home/j/fossil-backups
+
 to mount the fossil server on linux using 9pfuse:
-        9pfuse is more locked down and does not sudo but has issues with chmod, etc.
+        9pfuse is more locked down and does not sudo
+        fix for 9pfuse chmod issue https://github.com/9fans/plan9port/issues/81
         use -a main to see the snapshots (the whole tree)
         PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mnt
         disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
