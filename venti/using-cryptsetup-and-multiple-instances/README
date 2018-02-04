@@ -901,3 +901,19 @@ joe9> venti/mirrorarenas seem to be doing all the arenas even though only 1 or 2
        the blank arenas are written.
 <Fish> venti/mirrorarenas parse all the arenas, but only copy the filled arenas
 <joe9> ok, Thanks.
+
+venti/sync
+:glenda@cirno:/usr/glenda; venti/sync
+venti/sync: could not connect to server: cs: can't translate address: dns: resource does not exist; negrcode
+:glenda@cirno:/usr/glenda; ventiaddr=127.0.0.1
+:glenda@cirno:/usr/glenda; venti=tcp!$ventiaddr!17034
+:glenda@cirno:/usr/glenda; venti/sync # works now
+
+<riscoxx> are you tracking your fossil rootscores as i have suggested?  [14:59]
+<joe9> no, I am not. I will read up about it.
+<riscoxx> you should do fossil/last /path/of/device and then see what happens if you
+          put that score in a .vac file and vacfs and view the contents  [15:00]
+<joe9> :glenda@cirno:/usr/glenda; venti/sync
+<riscoxx> i think you do really want to try viewing what is saved in the venti via
+          fossil rootscore and vacfs, it is how you can check what data venti actually
+          has
