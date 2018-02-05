@@ -331,7 +331,9 @@ to stop cryptsetup disks:
 
 to copy data from existing machine to the new fossil system:
         mkdir /n/fossil-sdE2/backups/destination
-        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        # bug in mkfs, not creating destination files, creating __mkfstmp files
+        # disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        # disk/mkfs -v -a -s /mnt/term/src/ /sys/lib/sysconfig/proto/allproto | disk/mkext -v -u -d /n/fossil-sdE2/backups/destination
         echo fsys all snap -a >>/srv/fscons-sdE2
         venti/sync
 
@@ -362,7 +364,9 @@ to mount the fossil server on linux using 9pfuse:
         fix for 9pfuse chmod issue https://github.com/9fans/plan9port/issues/81
         use -a main to see the snapshots (the whole tree)
         PLAN9=/home/j/dev/apps/plan9/plan9port /home/j/dev/apps/plan9/plan9port/bin/9pfuse 'tcp!cirno!564' /tmp/mnt
-        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        # bug in mkfs, not creating destination files, creating __mkfstmp files
+        # disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        disk/mkfs -v -a -s /mnt/term/src/ /sys/lib/sysconfig/proto/allproto | disk/mkext -v -u -d /n/fossil-sdE2/backups/destination
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
 
@@ -371,7 +375,9 @@ to mount the fossil server on linux using v9fs with permission checking:
         # below seems to work well
         # from https://marc.info/?l=9fans&m=149673010624331&w=2
         sudo mount -t 9p -o unix,trans=unix,uname=$USER,dfltuid=$(id -u),dfltgid=$(id -g) $($PLAN9/bin/namespace)/fossil /home/j/fossil-backups
-        disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        # bug in mkfs, not creating destination files, creating __mkfstmp files
+        # disk/mkfs -s /mnt/term/src/ -d /n/fossil-sdE2/backups/destination /sys/lib/sysconfig/proto/allproto
+        disk/mkfs -v -a -s /mnt/term/src/ /sys/lib/sysconfig/proto/allproto | disk/mkext -v -u -d /n/fossil-sdE2/backups/destination
         TODO how to do this from linux? -- echo fsys all snap -a >>/srv/fscons-sdE2
         TODO how to do this from linux? -- venti/sync
 
