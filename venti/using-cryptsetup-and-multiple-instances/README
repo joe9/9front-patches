@@ -923,3 +923,78 @@ venti/sync: could not connect to server: cs: can't translate address: dns: resou
 <riscoxx> i think you do really want to try viewing what is saved in the venti via
           fossil rootscore and vacfs, it is how you can check what data venti actually
           has
+
+
+venti is slow
+<riscoxx> 3 days for a snapshot doesnt sound like things are working right  [15:58]
+<riscoxx> i think my advice to do some smaller snapshots and use the fossil rootscores and vacfs to check if things were working right would have been a good idea  [16:01]
+<Fish> venti writes are quite slow, if the snapshot is big enough, it could take several days  [16:29]
+<riscoxx> that slow? 3 days=72 hours, if 145gb takes longer than that it is writing less than 2gb/hour which seems crazy slow, i think im going to try to test a bit on a vps
+          node to get a rough metric  [17:31]
+<riscoxx> hmm venti manpages have some info on sizing index cache for throughput  [17:39]
+<riscoxx> according to venti manpage *if* you have 250mb of index cache you can theoretically sustain 10mb/sec of writes which is 36 gigs/hour, not sure how badly things degrade
+          with less icache  [17:42]
+<joe9> riscoxx: the snapshot is still running. It is at around 60GB and it has 80GB more to go.
+<joe9> atleast, hget is not causing an error.
+<riscoxx> well that is good - how did you size the caches?  [17:43]
+<riscoxx> because as i wrote above, with enough index cache, you should be getting vastly better throughput
+<joe9> i just left it at the defaults. I can wait, no hurries.  [17:44]
+<joe9> the interesting thing is that i cannot do anything with fossil while the snapshots are running. No mount of the fossil drive.  [17:45]
+<riscoxx> what are the defaults? i remember you showed your config file but i dont recall what you put for those numbers
+<joe9> riscoxx: would this help? http://okturing.com/src/2193/body  [17:48]
+<joe9> http://okturing.com/src/2194/body this is hget storage  [17:49]
+<riscoxx> no its the venticonf that has that info
+<joe9>    93.70 GiB  [17:50]
+<riscoxx> i recall that was part of your notes you had on github
+<joe9> no, that is not it.
+<joe9> this is the disk sizes with readable sizes http://okturing.com/src/2195/body
+<riscoxx> the caches are ram and are part of the venti config  [17:51]
+<riscoxx> you made a venti config during your setup i know
+<joe9> this is my venti.conf http://okturing.com/src/2196/body
+<riscoxx> aha
+<joe9> fsys main open -a -c 3000  [17:52]
+<joe9> is it that? fossil -c?
+<riscoxx> you have NO CACHE in your venti config
+<riscoxx> this is why its insanely slow
+<joe9> riscoxx: this is from venti startup http://okturing.com/src/2197/body  [17:53]
+<joe9> mem 2,236,962 bcmem 4,473,924 icmem 6,710,886
+<riscoxx> so its giving you tiny tiny caches  [17:55]
+<joe9> yes, agreed. will increase it. any suggestions, please? I am going through the venti manpage now.  [17:56]
+<riscoxx> depends how much ram you have on the machine
+<joe9> 65534M memory: 2906M kernel data, 62628M user, 63253M swap  [17:57]
+<joe9> this is from 9front startup.
+<joe9> I still have not figured how to check what ram is being used currently.
+<riscoxx> stats will show mem used
+<riscoxx> am i reading that right that you have 64gigs??  [17:58]
+<joe9> that probably includes swap
+<joe9> 126 holes free
+<joe9> 0x00020000 0x00092000 466944                                                    ctl echoke -flusho -extproc
+<joe9> 0x004ef000 0x7ffff000 2142306304
+<joe9> 2142773248 bytes free
+<riscoxx> dont you know how much ram you have installed?
+<joe9> I installed the system an year or so ago. I do not recall.  [17:59]
+<riscoxx> type 'memory'  [18:00]
+<joe9> http://okturing.com/src/2198/body
+<joe9> cool.
+<riscoxx> so yeah, you have 64 gigs. you might as well make all those caches a gig  [18:02]
+<joe9> riscoxx: ok, Thanks.
+<joe9> btw, I have badly written programs (by me) that are failing with malloc issues when I am trying to allocate memory. Is there a maximum malloc limit somewhere?  [18:03]
+<riscoxx> maybe but how much are you trying to malloc?  [18:04]
+<riscoxx> i dont think it should fail unless you are doing something absurd  [18:05]
+<joe9> riscoxx: I did not write it down. I will keep a note of it and ping you when it fails again.  [18:06]
+<joe9> riscoxx: any recommendations for the fossil -c cache?  [18:12]
+<riscoxx> you have tons of ram so might as well make it big right?  [18:13]
+<joe9> I used 1024000 for fossil fsys -c  [18:22]
+<joe9> 1024 blocks
+<joe9> sorry, 1024,000 blocks too much?
+<joe9> that would be 8G. I think 8M should be good enough.  [18:26]
+<joe9> I meant 512M not 8M  [18:29]
+<joe9> riscoxx: that is better, even the startup is so much quicker.  [18:36]
+<joe9> good idea, Thanks.
+<joe9> venti/venti: mem 1,073,741,824 bcmem 2,147,483,648 icmem 3,221,225,472...httpd tcp!127.0.0.1!8001...init...icache -1,073,741,824 bytes = 32,029,230 entries; 16 scache
+                                                                                                                                                                           [18:37]
+<joe9> riscoxx: The reason venti was so fast is because it crashed.  [18:40]
+<joe9> venti/venti: vtmalloc: out of memory
+<riscoxx> yeah theres obiously a limit on how large you want to go, id imagine you want to keep the total for venti and all caches to add up to less than 4 gigs  [18:47]
+<joe9> riscoxx: that helped. reduced to around 3G and it started up super quick.  [18:49]
+<joe9> the throughput has increased substantially too.  [18:51]
