@@ -810,8 +810,7 @@ https://marc.info/?t=125437396200002&r=1&w=4 auth, connect and mount in plan9por
 <joe9> PLAN9=/home/j/dev/apps/plan9/plan9port
        PATH=$PATH:/home/j/dev/apps/plan9/plan9port/bin
        /home/j/dev/apps/plan9/plan9port/bin/srv -a -k user=joe cirno:20564 fossil
-<joe9> /home/j/dev/apps/plan9/plan9port/bin/srv: authproxy: auth_proxy rpc: p9any
-       client get tickets: p9sk1: gettickets: unknown host 9front
+<joe9> /home/j/dev/apps/plan9/plan9port/bin/srv: authproxy: auth_proxy rpc: p9any client get tickets: p9sk1: gettickets: unknown host 9front
 <joe9> this http://okturing.com/src/2150/body  is from /lib/ndb/local  [15:45]
 <joe9> I see the 'unknown host 9front' even when the user is glenda, but, it still
        authenticates.
