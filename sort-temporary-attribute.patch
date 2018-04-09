@@ -1,0 +1,29 @@
+# HG changeset patch
+# User joe
+# Date 1523316865 25200
+#      Mon Apr 09 16:34:25 2018 -0700
+# Node ID 50b5db9fc3e7e44ace98eb5d1b3b2fce43de69df
+# Parent  cdb37a29d3d1bccac12ed6e9d844e5717b45b1c7
+create temporary files with the temporary attribute
+
+diff -r cdb37a29d3d1 -r 50b5db9fc3e7 sys/src/cmd/sort.c
+--- a/sys/src/cmd/sort.c	Fri Feb 02 18:37:28 2018 -0700
++++ b/sys/src/cmd/sort.c	Mon Apr 09 16:34:25 2018 -0700
+@@ -303,7 +303,7 @@
+ 	sort4(args.linep, args.nline);
+ 	tf = tempfile(args.ntemp);
+ 	args.ntemp++;
+-	f = create(tf, OWRITE, 0666);
++	f = create(tf, OWRITE, DMTMP | 0666);
+ 	if(f < 0) {
+ 		fprint(2, "sort: create %s: %r\n", tf);
+ 		done("create");
+@@ -397,7 +397,7 @@
+ 		if(n > Nmerge) {
+ 			tf = tempfile(args.ntemp);
+ 			args.ntemp++;
+-			f = create(tf, OWRITE, 0666);
++			f = create(tf, OWRITE, DMTMP | 0666);
+ 			if(f < 0) {
+ 				fprint(2, "sort: create %s: %r\n", tf);
+ 				done("create");
