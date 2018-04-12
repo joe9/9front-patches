@@ -997,3 +997,38 @@ venti is slow
 <riscoxx> yeah theres obiously a limit on how large you want to go, id imagine you want to keep the total for venti and all caches to add up to less than 4 gigs  [18:47]
 <joe9> riscoxx: that helped. reduced to around 3G and it started up super quick.  [18:49]
 <joe9> the throughput has increased substantially too.  [18:51]
+
+shutdown fossil/venti:
+# below from https://marc.info/?l=9fans&m=111558920225875&w=2
+# halt - sync (flush) and, if possible, halt all fossil + venti
+rfork e
+
+cd /
+
+# fossil first, since it lives on venti.
+# fossil is damned hard to shut down cleanly and
+# without losing blocks.
+for (f in /srv/fscons-*) {
+  if (test -e $f) {
+    echo -n 'fossil (takes a while)...'
+    for (n in `{seq 1 3}) {
+      echo -n sync...
+      echo fsys main sync >>$f # must be >>
+      sleep 3
+    }
+    echo -n sync...
+    echo fsys main sync >>$f   # must be >>
+    echo halt
+    echo fsys main halt >>$f   # must be >>
+  }
+}
+
+# venti next, since it may live on kfs
+echo -n venti...
+venti/sync             # upon return, sync is done, not just started
+
+My experience:
+--------------
+The key to having a good fossil/venti or cwfs or any fs installation is to keep it
+    small. They can always be extended as the need arises. Have multiple installations,
+    then it gets easier to learn, experiment, troubleshoot and manage.
