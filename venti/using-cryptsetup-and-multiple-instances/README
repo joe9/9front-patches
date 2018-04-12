@@ -1027,8 +1027,9 @@ for (f in /srv/fscons-*) {
 echo -n venti...
 venti/sync             # upon return, sync is done, not just started
 
-My experience:
+My experiences:
 --------------
 The key to having a good fossil/venti or cwfs or any fs installation is to keep it
     small. They can always be extended as the need arises. Have multiple installations,
     then it gets easier to learn, experiment, troubleshoot and manage.
+venti is too slow for realtime use. the fossil snap halts activity for too long (BUG).
