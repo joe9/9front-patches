@@ -1027,6 +1027,27 @@ for (f in /srv/fscons-*) {
 echo -n venti...
 venti/sync             # upon return, sync is done, not just started
 
+fossil hangs on snap:
+command to get stack traces:
+for(i in `{ps -a | grep fossil | awk '{print $2}'}){echo 'lstk()' | acid -l fossil.acid $i}
+<Fish> this is interesting, but I don't believe it's the same issue  [17:16]
+<Fish> this one has been fixed
+<Fish> it would be interesting to get stack traces
+<Fish> the easiest way to reproduce it would be to run fossil in user space  [17:17]
+<joe9> ok, will do. Thanks.  [17:25]
+<joe9> Fish: got it. http://okturing.com/src/4254/body  [18:28]
+<joe9> is the stack trace.
+<joe9> hangs again.
+<joe9> Fish: I can see venti working in the background. It is only fossil that seems to halt activity. It is probably waiting for something from venti or such.  [08:07]
+<joe9> any mount on the fossil disk also hangs.
+<joe9> it makes fossil run at venti speeds.  [08:08]
+<joe9> it seems related to snap. I think you or riscoxx might be running snap at night when you are not using the system.
+<joe9> that is probably the reason you would not have run into this issue.
+<joe9> http://okturing.com/src/4267/body another stack trace of the same issue.
+
+setting up an fs mirror with fossil:
+https://9p.io/wiki/plan9/Mirroring_with_Fossil_and_Venti/
+
 My experiences:
 --------------
 The key to having a good fossil/venti or cwfs or any fs installation is to keep it
