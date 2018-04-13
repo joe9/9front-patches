@@ -1030,6 +1030,8 @@ venti/sync             # upon return, sync is done, not just started
 fossil hangs on snap:
 command to get stack traces:
 for(i in `{ps -a | grep fossil | awk '{print $2}'}){echo 'lstk()' | acid -l fossil.acid $i}
+regarding https://marc.info/?l=9fans&m=131334453728485&w=2
+http://www.9grid.fr/www.9grid.fr/misc/fossil/deadlock1
 <Fish> this is interesting, but I don't believe it's the same issue  [17:16]
 <Fish> this one has been fixed
 <Fish> it would be interesting to get stack traces
