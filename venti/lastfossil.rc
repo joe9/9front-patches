@@ -1,0 +1,22 @@
+#!/bin/rc
+
+rfork e
+
+switch($#*){
+case 0
+  file=/dev/bkp/fossil
+  case 1
+	file=$1
+case *
+	echo 'usage: lastfossil [/dev/sdC0/fossil]' >[1=2]
+	exit usage
+}
+
+fn h2d { echo 'ibase=16;' print `{echo $1|tr a-z A-Z} |bc }
+header=`{dd -bs 1024 -iseek 128 -count 1 -if $file >[2]/dev/null| xd -b | sed 1q}
+bsize=`{h2d $header(8)^$header(9)}
+super=`{h2d 0$header(10)^$header(11)^$header(12)^$header(13)}
+x=`{dd -bs $bsize -iseek $super -count 1 -if $file >[2]/dev/null | xd -b |
+	sed '1,2d;3s/^.......  .. .. //;4s/^.......  (.. .. .. .. .. ..).*/\1/;4q' | tr -d ' '}
+echo vac:^$x(1)^$x(2)
+

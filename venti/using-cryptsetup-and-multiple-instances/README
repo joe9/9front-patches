@@ -1050,9 +1050,45 @@ http://www.9grid.fr/www.9grid.fr/misc/fossil/deadlock1
 setting up an fs mirror with fossil:
 https://9p.io/wiki/plan9/Mirroring_with_Fossil_and_Venti/
 
+
+from https://marc.info/?l=9fans&m=111558899222990&w=2
+If I have a filesystem which I don't want to write to venti, such as
+other in the old file server, I think I should not dispatch the command of
+fsys other config /dev/sdC0/other
+,instead, I should just do
+fsys other open
+without config command to this file system.
+However, if I have no config command, how the system knows where is
+other file system?
+
+kenji
+
+This is what we use. main is archived to venti; once is not.
+
+srv -p fscons
+srv -p fscmd
+msg -m 100 -p 15
+srv boot
+fsys main config /dev/fs/fossil
+fsys main open -c 20000
+fsys main
+snaptime -s 60 -a 0500 -t 6048
+listen il!*!17008
+listen tcp!*!564
+fsys once config /dev/fs/once
+fsys once open -c 2000
+fsys main
+
 My experiences:
 --------------
 The key to having a good fossil/venti or cwfs or any fs installation is to keep it
     small. They can always be extended as the need arises. Have multiple installations,
     then it gets easier to learn, experiment, troubleshoot and manage.
 venti is too slow for realtime use. the fossil snap halts activity for too long (BUG).
+giving up on fossil:
+1. cannot be used for realtime use as fossil snap halts activity for too long
+2. just a write cache
+   (cwfs has been more stable, just, sync and dump more frequently to be doubly sure)
+3. everyone has almost given up on fossil. There is probably a reason for that.
+
+
