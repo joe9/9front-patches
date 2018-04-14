@@ -1090,5 +1090,5 @@ giving up on fossil:
 2. just a write cache
    (cwfs has been more stable, just, sync and dump more frequently to be doubly sure)
 3. everyone has almost given up on fossil. There is probably a reason for that.
-
+4. vac is a lot faster than using fossil snap -a
 
