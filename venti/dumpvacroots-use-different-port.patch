@@ -1,0 +1,12 @@
+diff -r 2447a1b462c2 sys/src/cmd/venti/words/dumpvacroots
+--- a/sys/src/cmd/venti/words/dumpvacroots	Thu Apr 12 17:50:10 2018 -0400
++++ b/sys/src/cmd/venti/words/dumpvacroots	Fri Apr 20 15:32:10 2018 -0700
+@@ -5,7 +5,7 @@
+ 
+ ventihttp=`{
+ 	echo $venti | sed 's/^[a-z]+!([0-9\.]+)![a-z0-9]+$/\1/
+-		s/^[a-z]+!([0-9\.]+)/\1/; s/$/:8000/'
++		s/^[a-z]+!([0-9\.]+)/\1/; s/$/:8001/'
+ }
+ 
+ hget http://$ventihttp/index |
