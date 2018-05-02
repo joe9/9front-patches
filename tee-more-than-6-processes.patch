@@ -1,0 +1,101 @@
+# HG changeset patch
+# User joe
+# Date 1525224348 25200
+#      Tue May 01 18:25:48 2018 -0700
+# Node ID f66ba64c174246ee4ca3d3dc9ce82b1aa1af0a57
+# Parent  03265aafbc869fec734d35836aef78199861a6e4
+fix the tee bug when writing to more than 6 processes
+
+when writing to different processes, the 9,10.11 processes do not get any
+input. the 6,7,8 processes get twice the output
+
+ I could not figure out why the dup is required at all. but, without dup, it
+ reverts to the old behaviour.
+
+cd /tmp; rm *.test; echo 'testing' |\
+						jtee -a \
+						  >{cat > /tmp/1.test} \
+						  >{cat > /tmp/2.test} \
+						  >{cat > /tmp/3.test} \
+						  >{cat > /tmp/4.test} \
+						  >{cat > /tmp/5.test} \
+						  >{cat > /tmp/6.test} \
+						  >{cat > /tmp/7.test} \
+						  >{cat > /tmp/8.test} \
+						  >{cat > /tmp/9.test} \
+						  >{cat > /tmp/10.test} \
+						  >{cat > /tmp/11.test} \
+						  && ls -lt *.test
+testing
+--rw-r----- M 17993 glenda glenda  8 May  1 16:06 2.test
+--rw-r----- M 17993 glenda glenda  8 May  1 16:06 5.test
+--rw-r----- M 17993 glenda glenda  0 May  1 16:06 10.test
+--rw-r----- M 17993 glenda glenda 16 May  1 16:06 6.test
+--rw-r----- M 17993 glenda glenda  8 May  1 16:06 1.test
+--rw-r----- M 17993 glenda glenda 16 May  1 16:06 7.test
+--rw-r----- M 17993 glenda glenda  8 May  1 16:06 4.test
+--rw-r----- M 17993 glenda glenda 16 May  1 16:06 8.test
+--rw-r----- M 17993 glenda glenda  8 May  1 16:06 3.test
+--rw-r----- M 17993 glenda glenda  0 May  1 16:06 9.test
+--rw-r----- M 17993 glenda glenda  0 May  1 16:06 11.test
+cd /tmp; rm *.test; echo 'testing' |\
+							jtee -a \
+							  >{cat > /tmp/1.test} \
+							  >{cat > /tmp/2.test} \
+							  >{cat > /tmp/3.test} \
+							  >{cat > /tmp/4.test} \
+							  >{cat > /tmp/5.test} \
+							  >{cat > /tmp/6.test} \
+							  >{cat > /tmp/7.test} \
+							  >{cat > /tmp/8.test} \
+							  >{cat > /tmp/9.test} \
+							  >{cat > /tmp/10.test} \
+							  >{cat > /tmp/11.test} \
+							  && ls -lt *.test
+testing
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 2.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 5.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 10.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 6.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 1.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 7.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 4.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 8.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 3.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 9.test
+--rw-r----- M 17993 glenda glenda 8 May  1 16:06 11.test
+
+diff -r 03265aafbc86 -r f66ba64c1742 sys/src/cmd/tee.c
+--- a/sys/src/cmd/tee.c	Tue May 01 12:47:26 2018 -0700
++++ b/sys/src/cmd/tee.c	Tue May 01 18:25:48 2018 -0700
+@@ -21,6 +21,7 @@
+ {
+ 	int i;
+ 	int r, n;
++	int *fds = nil;
+ 
+ 	ARGBEGIN {
+ 	case 'a':
+@@ -54,8 +55,10 @@
+ 		if(i < 0) {
+ 			fprint(2, "tee: cannot open %s: %r\n", argv[0]);
+ 		} else {
+-			if(i != n+FDSTART)
+-				dup(i, n+FDSTART);
++			fds = realloc(fds,(n+1) * sizeof(int));
++			fds[n] = dup(i,-1);
++			/* if(i != n+FDSTART)
++				dup(i, n+FDSTART); */
+ 			n++;
+ 		}
+ 		argv++;
+@@ -66,7 +69,8 @@
+ 		if(r <= 0)
+ 			exits(nil);
+ 		for(i=0; i<n; i++)
+-			write(i+FDSTART, in, r);
++			/* write(i+FDSTART, in, r); */
++			write(fds[i], in, r);
+ 		write(1, in, r);
+ 	}
+ }
