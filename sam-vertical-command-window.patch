@@ -1,0 +1,21 @@
+# HG changeset patch
+# User joe
+# Date 1526052206 25200
+#      Fri May 11 08:23:26 2018 -0700
+# Node ID 50b8650fdc4124ac9a40b58809d334e7ec95b963
+# Parent  f66ba64c174246ee4ca3d3dc9ce82b1aa1af0a57
+sam show the command window vertically instead of horizontally
+
+diff -r f66ba64c1742 -r 50b8650fdc41 sys/src/cmd/samterm/main.c
+--- a/sys/src/cmd/samterm/main.c	Tue May 01 18:25:48 2018 -0700
++++ b/sys/src/cmd/samterm/main.c	Fri May 11 08:23:26 2018 -0700
+@@ -42,7 +42,8 @@
+ 	scratch = alloc(100*RUNESIZE);
+ 	nscralloc = 100;
+ 	r = screen->r;
+-	r.max.y = r.min.y+Dy(r)/5;
++	/* r.max.y = r.min.y+Dy(r)/5; */
++	r.max.x = r.min.x+Dx(r)/5;
+ 	flstart(screen->clipr);
+ 	rinit(&cmd.rasp);
+ 	flnew(&cmd.l[0], gettext, 1, &cmd);
