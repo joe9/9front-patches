@@ -1,0 +1,21 @@
+# HG changeset patch
+# User joe
+# Date 1531288287 25200
+#      Tue Jul 10 22:51:27 2018 -0700
+# Node ID b284d7e38aea13130af209520a74290f9a8d018d
+# Parent  be9dbaff3f9220435b4782e9175c9744032b9606
+correct X86FAMILY and X86MODEL macros as per the docs
+
+diff -r be9dbaff3f92 -r b284d7e38aea sys/src/9/pc/io.h
+--- a/sys/src/9/pc/io.h	Fri May 18 10:09:16 2018 -0700
++++ b/sys/src/9/pc/io.h	Tue Jul 10 22:51:27 2018 -0700
+@@ -1,7 +1,7 @@
+ #define X86STEPPING(x)	((x) & 0x0F)
+ /* incorporates extended-model and -family bits */
+-#define X86MODEL(x)	((((x)>>4) & 0x0F) | (((x)>>16) & 0x0F)<<4)
+-#define X86FAMILY(x)	((((x)>>8) & 0x0F) | (((x)>>20) & 0xFF)<<4)
++#define X86MODEL(x)	((((x)>>4) & 0x0F) + (((x)>>16) & 0x0F)<<4)
++#define X86FAMILY(x)	((((x)>>8) & 0x0F) + (((x)>>20) & 0xFF))
+ 
+ enum {
+ 	VectorDE	= 1,		/* debug exception */

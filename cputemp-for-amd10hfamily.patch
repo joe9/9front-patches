@@ -1,0 +1,69 @@
+# HG changeset patch
+# User joe
+# Date 1531288521 25200
+#      Tue Jul 10 22:55:21 2018 -0700
+# Node ID 7b409fd199d99dfedff81763eeafbf297bce57e1
+# Parent  b284d7e38aea13130af209520a74290f9a8d018d
+updated cputemp on amd10h family to the specification
+
+diff -r b284d7e38aea -r 7b409fd199d9 sys/src/9/pc/cputemp.c
+--- a/sys/src/9/pc/cputemp.c	Tue Jul 10 22:51:27 2018 -0700
++++ b/sys/src/9/pc/cputemp.c	Tue Jul 10 22:55:21 2018 -0700
+@@ -126,34 +126,37 @@
+ amd10temprd(Chan*, void *a, long n, vlong offset)
+ {
+ 	char *s, *e, *r, *buf;
+-	long i, t, c, nb, cores[MAXMACH];
++	long i, t, c, nb;
+ 	Pcidev *p;
++	int m;
+ 
+-	nb = 0;
+-	for(p = 0; p = pcimatch(p, 0x1022, 0x1203); ){
+-		cores[nb++] = 1 + ((pcicfgr32(p, 0xe8) & 0x3000)>>12);
+-		if(nb == nelem(cores))
+-			break;
+-	}
+-	if(nb == 0)
+-		return readstr(offset, a, n, "-1±-1 unsupported\n");
++	if (offset > 0) return 0;
+ 	buf = smalloc(MAXMACH*4*32);
+ 	s = buf;
+ 	e = buf + MAXMACH*4*32;
+ 	nb = 0;
+-	c = 0;
+ 	for(p = 0; p = pcimatch(p, 0x1022, 0x1203); nb++){
+-		i = pcicfgr32(p, 0xa4) & 0x7fffffff;
+-		i >>= 21;
+-		t = i/8;
+-		r = ".0";
+-		if(i % 8 >= 4)
+-			r = "0.5";
+-		/*
+-		 * only one value per nb; repeat per core
+-		 */
+-		while(c++ < conf.nmach && cores[nb]--)
++		if (nb == MAXMACH) break;
++		c = pcicfgr32(p, 0xe8);
++		m = c>>29 & 0x1;
++		/* print("amd10temprd: tbdf=%d 0xe8=%.8ulx m=%d\n",p->tbdf,c,m); */
++		/* on a MultiNodeCpu, only use when IntNodeNum == 0 */
++		if ((m == 1 && c>>30 == 0) || m == 0) {
++			t = pcicfgr32(p, 0xa4);
++			i = t & 0x7fffffff;
++			/* i = pcicfgr32(p, 0xa4) & 0x7fffffff; */
++			/* print("amd10temprd: tbdf=%d 0xa4=%.8ulx i=%.8ulx\n",p->tbdf,t,i); */
++			i >>= 21;
++			t = i/8;
++			r = ".0";
++			if(i % 8 >= 4)
++				r = ".5";
+ 			s = seprint(s, e, "%ld%s±0.5%s\n", t, r, "");
++		}
++	}
++	if(nb == 0) {
++		free(buf);
++		return readstr(offset, a, n, "-1±-1 unsupported\n");
+ 	}
+ 	i = readstr(offset, a, n, buf);
+ 	free(buf);
