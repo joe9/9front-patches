@@ -1,0 +1,163 @@
+# HG changeset patch
+# User joe
+# Date 1531325505 25200
+#      Wed Jul 11 09:11:45 2018 -0700
+# Node ID d388c79c0b5985990fe7f8685b7294832247b24d
+# Parent  f9a9f7e1c5e66cf5ff84e4cf2ea52bb22de41ef0
+show cputemp per processor intead of per core
+
+<joe9> aiju: the patch works. Thanks. any thoughts on the cputemp.c patch? interested?  [08:23]
+<aiju> joe9: i don't know what's going on  [08:33]
+<aiju> i looked at the patch but i don't know why you changed it
+<joe9> the r="0.5" that is a bug  [08:39]
+<joe9> it should be r=".5"
+<joe9>  http://okturing.com/src/4682/body  [08:40]
+<joe9> regarding the bigger change: 1. the core count in the original code is wrong. It should use 3 bits and not the 2 bits as used. 2. The space says that for the processor
+       temperature the node == 0 on mulitNodeCpu's  [08:41]
+<joe9> Pg 317 of the spec F3xA4 CurTmp  [08:42]
+<joe9> and Pg 327 F3xE8
+<joe9> the current code is showing the temperature for each core. whereas, amd is only providing temperatures for a node.  [08:43]
+<joe9> It appears that the better approach is to show the temperature of the processor (the northbridge with a node == 0 on multiNodeCpu's)  [08:44]
+<joe9> there are 3 issues there. 1. the bug with r="0.5" 2. wrong core count is being used when displaying the temperature for the core. 3. Is there a need for showing the
+       temperature for each core? The code is just writing the same value for all the cores on a node anyway. Why not just display the processor temperature instead?  [08:46]
+<aiju> you're assuming there is only one processor
+<joe9> no, I have a machine with 2 processors.  [08:47]
+<aiju> oh, sorry, just read all backlog
+<aiju> so you get the number of processors from somewhere else?
+<aiju> joe9: it's a question of whether you want a simple file format or not :)
+<aiju> joe9: most of plan 9 doesn't distinguish so replicatring the numbers makes more sense
+<joe9> this is what my code shows http://okturing.com/src/4707/body  [08:48]
+<joe9> but, there is subtle issue there.
+<joe9> when looping through the nb using pcimatch, when the 1st node is not 0, then it would show the node temperature and not the processor temperature on the first line.
+                                                                                                                                                                           [08:49]
+<joe9> the stats (I assume) would just be using the 1st line of the output from /dev/cputemp.
+<joe9> it would be inconsistent.  [08:50]
+<aiju> ok i get the current code may be broken
+<aiju> but i think having the file froamt have N lines where N = NPROC is the simplest thing to do  [08:51]
+<joe9> there are 3 issues there. I think the 1st is an obvious bug
+<aiju> and i mean $NPROC
+<aiju> err i think it's $NCPU :)
+<aiju> no, $NPROC
+<aiju> anyway
+<joe9> the second is also a bug as it is calculating the core count wrongly (using 2 bits instead of 3 bits)
+<joe9> the third is about showing the temperature per core or per processor. this is subjective and I leave it to your judgement.  [08:52]
+<aiju> do you understand my argument
+<aiju> it might not be a human looking at /dev/cputemp
+<aiju> maybe it's some code that wants to match temperature to logical cores
+<joe9> I think you are focussing on the 3rd issue.
+<joe9> I leave that to your judgement as it ties in with the bigger plan9 architecture and usage.  [08:53]
+<aiju> if you have a 2-core and a 4-core cpu, it should print 6 lines that match the CPU ids used by plan 9
+<aiju> it doesn't matter that some lines are replicated
+<joe9> I understand what you are saying, but, the actual processor temperature could be lost in all the lines.  [08:54]
+<aiju> what?
+<aiju> :)
+<aiju> it's *RIGHT THERE*
+<joe9> which line? there is no way of knowinng. it would be showing all the core temperatures.  [08:55]
+<joe9> there is no way of knowing which was the core 0
+<aiju> that is my complaint about YOUR format
+<aiju> it prints two lines, how do i know what core it corresponds to?
+<aiju> or rather, how does *some code* know  [08:56]
+<joe9> that is the same issue with the original code too. isn't it? It is just printing out the temperatures, it is not sorting or going through to ensure that they are being
+       printed 0 ..  [08:57]
+<joe9> I mean print the 0 core temperature first
+<joe9> then the next line with core 1 temperature
+<joe9> and, so on.
+<aiju> i'm not arguing against changing the code
+<aiju> i'm arguing against the way you want to change it
+<aiju> i'm telling you what it SHOULD do
+<joe9> ok.
+<aiju> what i think, it should, anyway
+<joe9> that is invaluable.  [08:58]
+<joe9> what do you think the output should be? I can tailor the output to it.
+<joe9> core no. temperature?
+<aiju> as i said, one line per logical core, matching the plan 9 ids
+<aiju> no need for numbers  [08:59]
+<joe9> where are the plan9 ids? I could not find them aux/cpuid
+<aiju> what?
+<aiju> plan 9 just numbers cores from 0 to N-1  [09:00]
+<joe9> this is from my boot http://okturing.com/src/4708/body
+<joe9> you want it to be similar to that but with a temperature instead, correct?  [09:01]
+<aiju> cpu0 should also be somewhere, no?
+<joe9> it is
+<aiju> joe9: it should look like what you pasted (which is the original format?)
+<joe9> I did not paste it. it was garbled on my screen
+<aiju> just more lines
+<aiju> line number 1 should be core 0
+<aiju> etc
+<joe9> ok, Thanks.  [09:03]
+<aiju> joe9: i assume what you pasted matches the original format
+<aiju> joe9: this isn't what i would use, i think, if i were to make it up from scratch
+<aiju> but i think what i described is a minimal change that makes the most sense
+<aiju> (in terms of format)
+<joe9> this is the original format, before my changes http://okturing.com/src/4682/body  [09:05]
+<aiju> yeah
+<aiju> i just don't want to break stuff :)  [09:06]
+<joe9> I understand your rationaly regarding the core temperatures. it will probably be more involved as I would have to sort the temperatures based on the core id.  [09:07]
+<joe9> what do you think about the 1st 2 issues?
+<aiju> 1 sounds like an obvious bug  [09:08]
+<aiju> 2 too
+<aiju> but i haven't read the document
+<aiju> or tried to understand the code
+
+diff -r f9a9f7e1c5e6 -r d388c79c0b59 sys/src/9/pc/cputemp.c
+--- a/sys/src/9/pc/cputemp.c	Wed Jul 11 16:05:03 2018 +0100
++++ b/sys/src/9/pc/cputemp.c	Wed Jul 11 09:11:45 2018 -0700
+@@ -126,34 +126,37 @@
+ amd10temprd(Chan*, void *a, long n, vlong offset)
+ {
+ 	char *s, *e, *r, *buf;
+-	long i, t, c, nb, cores[MAXMACH];
++	long i, t, c, nb;
+ 	Pcidev *p;
+-
+-	nb = 0;
+-	for(p = 0; p = pcimatch(p, 0x1022, 0x1203); ){
+-		cores[nb++] = 1 + ((pcicfgr32(p, 0xe8) & 0x3000)>>12);
+-		if(nb == nelem(cores))
+-			break;
+-	}
+-	if(nb == 0)
+-		return readstr(offset, a, n, "-1±-1 unsupported\n");
++	int m;
++	
++	if (offset > 0) return 0;
+ 	buf = smalloc(MAXMACH*4*32);
+ 	s = buf;
+ 	e = buf + MAXMACH*4*32;
+ 	nb = 0;
+-	c = 0;
+ 	for(p = 0; p = pcimatch(p, 0x1022, 0x1203); nb++){
+-		i = pcicfgr32(p, 0xa4) & 0x7fffffff;
+-		i >>= 21;
+-		t = i/8;
+-		r = ".0";
+-		if(i % 8 >= 4)
+-			r = "0.5";
+-		/*
+-		 * only one value per nb; repeat per core
+-		 */
+-		while(c++ < conf.nmach && cores[nb]--)
++		if (nb == MAXMACH) break;
++		c = pcicfgr32(p, 0xe8);
++		m = c>>29 & 0x1;
++		/* print("amd10temprd: tbdf=%d 0xe8=%.8ulx m=%d\n",p->tbdf,c,m); */
++		/* on a MultiNodeCpu, only use when IntNodeNum == 0 */
++		if ((m == 1 && c>>30 == 0) || m == 0) {
++			t = pcicfgr32(p, 0xa4);
++			i = t & 0x7fffffff;
++			/* i = pcicfgr32(p, 0xa4) & 0x7fffffff; */
++			/* print("amd10temprd: tbdf=%d 0xa4=%.8ulx i=%.8ulx\n",p->tbdf,t,i); */
++			i >>= 21;
++			t = i/8;
++			r = ".0";
++			if(i % 8 >= 4)
++				r = ".5";
+ 			s = seprint(s, e, "%ld%s±0.5%s\n", t, r, "");
++		}
++	}
++	if(nb == 0) {
++		free(buf);
++		return readstr(offset, a, n, "-1±-1 unsupported\n");
+ 	}
+ 	i = readstr(offset, a, n, buf);
+ 	free(buf);
