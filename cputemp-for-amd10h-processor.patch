@@ -1,10 +1,10 @@
 # HG changeset patch
 # User joe
-# Date 1531325505 25200
-#      Wed Jul 11 09:11:45 2018 -0700
-# Node ID d388c79c0b5985990fe7f8685b7294832247b24d
-# Parent  f9a9f7e1c5e66cf5ff84e4cf2ea52bb22de41ef0
-show cputemp per processor intead of per core
+# Date 1531430500 25200
+#      Thu Jul 12 14:21:40 2018 -0700
+# Node ID 13a24e82d155c07f6b95795ae9c164bcca50c34c
+# Parent  121def0aed4d944aa0976c2d6fbf1aa1c5afbaea
+show the temparature on all NorthBridge nodes
 
 <joe9> aiju: the patch works. Thanks. any thoughts on the cputemp.c patch? interested?  [08:23]
 <aiju> joe9: i don't know what's going on  [08:33]
@@ -99,15 +99,15 @@ show cputemp per processor intead of per core
 <aiju> but i haven't read the document
 <aiju> or tried to understand the code
 
-diff -r f9a9f7e1c5e6 -r d388c79c0b59 sys/src/9/pc/cputemp.c
---- a/sys/src/9/pc/cputemp.c	Wed Jul 11 16:05:03 2018 +0100
-+++ b/sys/src/9/pc/cputemp.c	Wed Jul 11 09:11:45 2018 -0700
-@@ -126,34 +126,37 @@
+diff -r 121def0aed4d -r 13a24e82d155 sys/src/9/pc/cputemp.c
+--- a/sys/src/9/pc/cputemp.c	Thu Jul 12 09:33:33 2018 +0200
++++ b/sys/src/9/pc/cputemp.c	Thu Jul 12 14:21:40 2018 -0700
+@@ -126,34 +126,33 @@
  amd10temprd(Chan*, void *a, long n, vlong offset)
  {
  	char *s, *e, *r, *buf;
 -	long i, t, c, nb, cores[MAXMACH];
-+	long i, t, c, nb;
++	long i, t, nb;
  	Pcidev *p;
 -
 -	nb = 0;
@@ -118,7 +118,6 @@ diff -r f9a9f7e1c5e6 -r d388c79c0b59 sys/src/9/pc/cputemp.c
 -	}
 -	if(nb == 0)
 -		return readstr(offset, a, n, "-1±-1 unsupported\n");
-+	int m;
 +	
 +	if (offset > 0) return 0;
  	buf = smalloc(MAXMACH*4*32);
@@ -128,32 +127,27 @@ diff -r f9a9f7e1c5e6 -r d388c79c0b59 sys/src/9/pc/cputemp.c
 -	c = 0;
  	for(p = 0; p = pcimatch(p, 0x1022, 0x1203); nb++){
 -		i = pcicfgr32(p, 0xa4) & 0x7fffffff;
--		i >>= 21;
++		if (nb == MAXMACH) break;
++		/* c = pcicfgr32(p, 0xe8);
++		print("amd10temprd: tbdf=%d 0xe8=%.8ulx\n",p->tbdf,c);
++		c = pcicfgr32(p, 0x64);
++		print("amd10temprd: tbdf=%d 0x64=%.8ulx\n",p->tbdf,c); */
++		t = pcicfgr32(p, 0xa4);
++		i = t & 0x7fffffff;
++		/* i = pcicfgr32(p, 0xa4) & 0x7fffffff; */
++		/* print("amd10temprd: tbdf=%d 0xa4=%.8ulx i=%.8ulx\n",p->tbdf,t,i); */
+ 		i >>= 21;
 -		t = i/8;
--		r = ".0";
--		if(i % 8 >= 4)
+ 		r = ".0";
+ 		if(i % 8 >= 4)
 -			r = "0.5";
 -		/*
 -		 * only one value per nb; repeat per core
 -		 */
 -		while(c++ < conf.nmach && cores[nb]--)
-+		if (nb == MAXMACH) break;
-+		c = pcicfgr32(p, 0xe8);
-+		m = c>>29 & 0x1;
-+		/* print("amd10temprd: tbdf=%d 0xe8=%.8ulx m=%d\n",p->tbdf,c,m); */
-+		/* on a MultiNodeCpu, only use when IntNodeNum == 0 */
-+		if ((m == 1 && c>>30 == 0) || m == 0) {
-+			t = pcicfgr32(p, 0xa4);
-+			i = t & 0x7fffffff;
-+			/* i = pcicfgr32(p, 0xa4) & 0x7fffffff; */
-+			/* print("amd10temprd: tbdf=%d 0xa4=%.8ulx i=%.8ulx\n",p->tbdf,t,i); */
-+			i >>= 21;
-+			t = i/8;
-+			r = ".0";
-+			if(i % 8 >= 4)
-+				r = ".5";
- 			s = seprint(s, e, "%ld%s±0.5%s\n", t, r, "");
-+		}
+-			s = seprint(s, e, "%ld%s±0.5%s\n", t, r, "");
++			r = ".5";
++		s = seprint(s, e, "%ld%s±0.5%s\n", i/8, r, "");
 +	}
 +	if(nb == 0) {
 +		free(buf);
