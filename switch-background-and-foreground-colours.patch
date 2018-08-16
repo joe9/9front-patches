@@ -1,0 +1,36 @@
+# HG changeset patch
+# User joe
+# Date 1534427760 25200
+#      Thu Aug 16 06:56:00 2018 -0700
+# Node ID 6b279d4e39f6ccba93c158441ab032392ba56b61
+# Parent  fbdd522d74b2cdefeffd24d11d0c90b4866f63cf
+Switched the background and foreground colours
+
+diff -r fbdd522d74b2 -r 6b279d4e39f6 sys/src/cmd/samterm/flayer.c
+--- a/sys/src/cmd/samterm/flayer.c	Mon Aug 13 10:37:30 2018 -0700
++++ b/sys/src/cmd/samterm/flayer.c	Thu Aug 16 06:56:00 2018 -0700
+@@ -29,18 +29,18 @@
+ 	lDrect = r;
+ 
+ 	/* Main text is yellowish */
+-	maincols[BACK] = allocimagemix(display, DPaleyellow, DWhite);
++	maincols[BACK] = display->black; /* allocimagemix(display, DPaleyellow, DWhite); */
+ 	maincols[HIGH] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DDarkyellow);
+ 	maincols[BORD] = allocimage(display, Rect(0,0,2,2), screen->chan, 1, DYellowgreen);
+-	maincols[TEXT] = display->black;
+-	maincols[HTEXT] = display->black;
++	maincols[TEXT] = allocimagemix(display, DPaleyellow, DWhite); /* display->black; */
++	maincols[HTEXT] = allocimagemix(display, DPaleyellow, DWhite); /* display->black; */
+ 
+ 	/* Command text is blueish */
+-	cmdcols[BACK] = allocimagemix(display, DPalebluegreen, DWhite);
++	cmdcols[BACK] = display->black; /* allocimagemix(display, DPalebluegreen, DWhite); */
+ 	cmdcols[HIGH] = allocimage(display, Rect(0,0,1,1), screen->chan, 1, DPalegreygreen);
+ 	cmdcols[BORD] = allocimage(display, Rect(0,0,2,2), screen->chan, 1, DPurpleblue);
+-	cmdcols[TEXT] = display->black;
+-	cmdcols[HTEXT] = display->black;
++	cmdcols[TEXT] = allocimagemix(display, DPalebluegreen, DWhite); /* display->black; */
++	cmdcols[HTEXT] = allocimagemix(display, DPalebluegreen, DWhite); /* display->black; */
+ }
+ 
+ void
