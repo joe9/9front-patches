@@ -1,0 +1,17 @@
+# HG changeset patch
+# User joe
+# Date 1537545603 25200
+#      Fri Sep 21 09:00:03 2018 -0700
+# Node ID 9a8f28029c768d0e4f190a64f43bc4e5a4cbeb50
+# Parent  19b105a970677512b47dc97800e5edf524e9709e
+document rc bug with number arguments
+
+diff -r 19b105a97067 -r 9a8f28029c76 sys/man/1/rc
+--- a/sys/man/1/rc	Thu Sep 20 21:25:38 2018 +0200
++++ b/sys/man/1/rc	Fri Sep 21 09:00:03 2018 -0700
+@@ -1007,3 +1007,5 @@
+ Functions containing here documents don't work.
+ .PP
+ Free carets don't get inserted next to keywords.
++.PP
++$"argument is always empty with number arguments ($"1, $"2, etc.)
