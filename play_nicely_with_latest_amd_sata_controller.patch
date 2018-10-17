@@ -1,0 +1,28 @@
+# HG changeset patch
+# User joe
+# Date 1539807714 25200
+#      Wed Oct 17 13:21:54 2018 -0700
+# Node ID 855645ff928b86129a314a0e7380cebe74eb4c14
+# Parent  4c1c90cb3a47f8cc9414f6165b4bc957c07b0b51
+recognise SB7x0/SB8x0/SB9x0 SATA Controller [AHCI mode] as an AHCI controller
+
+it does not need the 255 max packets errata fix too
+
+diff -r 4c1c90cb3a47 -r 855645ff928b sys/src/9/pc/sdiahci.c
+--- a/sys/src/9/pc/sdiahci.c	Tue Oct 16 12:53:55 2018 -0700
++++ b/sys/src/9/pc/sdiahci.c	Wed Oct 17 13:21:54 2018 -0700
+@@ -2088,8 +2088,12 @@
+ 		break;
+ 	case 0x1002:
+ 		if(p->ccru == 1 || p->ccrp != 1)
+-		if(p->did == 0x4380 || p->did == 0x4390)
+-			sbsetupahci(p);
++			if(p->did == 0x4380 || p->did == 0x4390)
++				sbsetupahci(p);
++		if(p->did == 0x4391 || p->did == 0x4394) {
++			type = Tahci;
++			break;
++		}
+ 		type = Tsb600;
+ 		break;
+ 	case 0x1106:
