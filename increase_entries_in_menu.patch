@@ -1,0 +1,22 @@
+# HG changeset patch
+# User joe
+# Date 1540229759 25200
+#      Mon Oct 22 10:35:59 2018 -0700
+# Node ID ecd46ac895975d8ddd30c1caf804053c2a5e8637
+# Parent  855645ff928b86129a314a0e7380cebe74eb4c14
+increase the number of entries in sam right menu
+
+diff -r 855645ff928b -r ecd46ac89597 sys/src/libdraw/menuhit.c
+--- a/sys/src/libdraw/menuhit.c	Wed Oct 17 13:21:54 2018 -0700
++++ b/sys/src/libdraw/menuhit.c	Mon Oct 22 10:35:59 2018 -0700
+@@ -10,8 +10,8 @@
+ 	Border = 2,		/* outside to selection boxes */
+ 	Blackborder = 2,	/* width of outlining border */
+ 	Vspacing = 2,		/* extra spacing between lines of text */
+-	Maxunscroll = 25,	/* maximum #entries before scrolling turns on */
+-	Nscroll = 20,		/* number entries in scrolling part */
++	Maxunscroll = 80 /* 25 */,	/* maximum #entries before scrolling turns on */
++	Nscroll = 80 /* 20 */,		/* number entries in scrolling part */
+ 	Scrollwid = 14,		/* width of scroll bar */
+ 	Gap = 4,			/* between text and scroll bar */
+ };
