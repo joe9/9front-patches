@@ -1,0 +1,90 @@
+diff --git a/sys/src/cmd/rio/dat.h b/sys/src/cmd/rio/dat.h
+--- a/sys/src/cmd/rio/dat.h
++++ b/sys/src/cmd/rio/dat.h
+@@ -210,6 +210,7 @@ void		wresize(Window*, Image*);
+ void		wscrdraw(Window*);
+ void		wscroll(Window*, int);
+ void		wselect(Window*);
++void		wsend(Window*);
+ void		wsendctlmesg(Window*, int, Rectangle, void*);
+ void		wsetcursor(Window*, int);
+ void		wsetname(Window*);
+diff --git a/sys/src/cmd/rio/rio.c b/sys/src/cmd/rio/rio.c
+--- a/sys/src/cmd/rio/rio.c
++++ b/sys/src/cmd/rio/rio.c
+@@ -809,21 +809,7 @@ button2menu(Window *w)
+ 		break;
+ 
+ 	case Send:
+-		getsnarf();
+-		wsnarf(w);
+-		if(nsnarf == 0)
+-			break;
+-		if(w->rawing){
+-			waddraw(w, snarf, nsnarf);
+-			if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
+-				waddraw(w, L"\n", 1);
+-		}else{
+-			winsert(w, snarf, nsnarf, w->nr);
+-			if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
+-				winsert(w, L"\n", 1, w->nr);
+-		}
+-		wsetselect(w, w->nr, w->nr);
+-		wshow(w, w->nr);
++		wsend(w);
+ 		break;
+ 
+ 	case Scroll:
+diff --git a/sys/src/cmd/rio/wind.c b/sys/src/cmd/rio/wind.c
+--- a/sys/src/cmd/rio/wind.c
++++ b/sys/src/cmd/rio/wind.c
+@@ -677,6 +677,24 @@ wkeyctl(Window *w, Rune r)
+ 			wsetselect(w, w->qh, w->qh);
+ 			wshow(w, w->q0);
+ 			return;
++		case 0x10:	/* ^P: plumb */
++			wplumb(w);
++			return;
++		case 0x11:	/* ^Q: send line or selection */
++			if(w->q0 != w->q1){
++				wsend(w);
++				return;
++			}
++			if(w->q0==0 || w->q0==w->qh || w->r[w->q0-1]=='\n')
++				q0 = w->q0;
++			else
++				q0 = w->q0 - wbswidth(w, 0x15);
++			q1 = w->q0;
++			while(q1 < w->nr && w->r[q1]!='\n')
++				q1++;
++			wsetselect(w, q0, q1);
++			wsend(w);
++			return;
+ 		}
+ 	if(w->rawing && (w->q0==w->nr || w->mouseopen)){
+ 		waddraw(w, &r, 1);
+@@ -1788,3 +1806,23 @@ wcontents(Window *w, int *ip)
+ {
+ 	return runetobyte(w->r, w->nr, ip);
+ }
++
++void
++wsend(Window *w)
++{
++	getsnarf();
++	wsnarf(w);
++	if(nsnarf == 0)
++		return;
++	if(w->rawing){
++		waddraw(w, snarf, nsnarf);
++		if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
++			waddraw(w, L"\n", 1);
++	}else{
++		winsert(w, snarf, nsnarf, w->nr);
++		if(snarf[nsnarf-1]!='\n' && snarf[nsnarf-1]!='\004')
++			winsert(w, L"\n", 1, w->nr);
++	}
++	wsetselect(w, w->nr, w->nr);
++	wshow(w, w->nr);
++}
+
