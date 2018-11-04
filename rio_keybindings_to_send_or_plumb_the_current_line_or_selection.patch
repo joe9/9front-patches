@@ -1,7 +1,21 @@
-diff --git a/sys/src/cmd/rio/dat.h b/sys/src/cmd/rio/dat.h
---- a/sys/src/cmd/rio/dat.h
-+++ b/sys/src/cmd/rio/dat.h
-@@ -210,6 +210,7 @@ void		wresize(Window*, Image*);
+# HG changeset patch
+# User joe
+# Date 1541371233 25200
+#      Sun Nov 04 15:40:33 2018 -0700
+# Node ID efa5461222f86faba6fd755f012155f2c823b862
+# Parent  ecd46ac895975d8ddd30c1caf804053c2a5e8637
+rio keybindings to send or plumb the current line or selection
+
+<kvik> joe9: here's a rio patch. hope it applies, i edited it by hand. http://okturing.com/src/5315/body  [19:46]
+<kvik> joe9: ^Q will "send" a current line or selection. you'll notice there's also ^P which does "plumb"  [19:48]
+<mischief> do you hate the mouse  [19:51]
+<joe9> kvik: Thanks.  [19:54]
+<kvik> mischief: no, just the stupid "find and double click the start or end of line, do the menu dance" for a really common task  [20:00]
+
+diff -r ecd46ac89597 -r efa5461222f8 sys/src/cmd/rio/dat.h
+--- a/sys/src/cmd/rio/dat.h	Mon Oct 22 10:35:59 2018 -0700
++++ b/sys/src/cmd/rio/dat.h	Sun Nov 04 15:40:33 2018 -0700
+@@ -210,6 +210,7 @@
  void		wscrdraw(Window*);
  void		wscroll(Window*, int);
  void		wselect(Window*);
@@ -9,10 +23,10 @@ diff --git a/sys/src/cmd/rio/dat.h b/sys/src/cmd/rio/dat.h
  void		wsendctlmesg(Window*, int, Rectangle, void*);
  void		wsetcursor(Window*, int);
  void		wsetname(Window*);
-diff --git a/sys/src/cmd/rio/rio.c b/sys/src/cmd/rio/rio.c
---- a/sys/src/cmd/rio/rio.c
-+++ b/sys/src/cmd/rio/rio.c
-@@ -809,21 +809,7 @@ button2menu(Window *w)
+diff -r ecd46ac89597 -r efa5461222f8 sys/src/cmd/rio/rio.c
+--- a/sys/src/cmd/rio/rio.c	Mon Oct 22 10:35:59 2018 -0700
++++ b/sys/src/cmd/rio/rio.c	Sun Nov 04 15:40:33 2018 -0700
+@@ -809,21 +809,7 @@
  		break;
  
  	case Send:
@@ -35,10 +49,10 @@ diff --git a/sys/src/cmd/rio/rio.c b/sys/src/cmd/rio/rio.c
  		break;
  
  	case Scroll:
-diff --git a/sys/src/cmd/rio/wind.c b/sys/src/cmd/rio/wind.c
---- a/sys/src/cmd/rio/wind.c
-+++ b/sys/src/cmd/rio/wind.c
-@@ -677,6 +677,24 @@ wkeyctl(Window *w, Rune r)
+diff -r ecd46ac89597 -r efa5461222f8 sys/src/cmd/rio/wind.c
+--- a/sys/src/cmd/rio/wind.c	Mon Oct 22 10:35:59 2018 -0700
++++ b/sys/src/cmd/rio/wind.c	Sun Nov 04 15:40:33 2018 -0700
+@@ -677,6 +677,24 @@
  			wsetselect(w, w->qh, w->qh);
  			wshow(w, w->q0);
  			return;
@@ -63,7 +77,7 @@ diff --git a/sys/src/cmd/rio/wind.c b/sys/src/cmd/rio/wind.c
  		}
  	if(w->rawing && (w->q0==w->nr || w->mouseopen)){
  		waddraw(w, &r, 1);
-@@ -1788,3 +1806,23 @@ wcontents(Window *w, int *ip)
+@@ -1788,3 +1806,23 @@
  {
  	return runetobyte(w->r, w->nr, ip);
  }
@@ -87,4 +101,3 @@ diff --git a/sys/src/cmd/rio/wind.c b/sys/src/cmd/rio/wind.c
 +	wsetselect(w, w->nr, w->nr);
 +	wshow(w, w->nr);
 +}
-
