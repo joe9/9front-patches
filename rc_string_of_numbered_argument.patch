@@ -1,0 +1,39 @@
+diff -r 01468da33a6e sys/src/cmd/rc/exec.c
+--- a/sys/src/cmd/rc/exec.c	Wed Oct 31 19:48:16 2018 +0100
++++ b/sys/src/cmd/rc/exec.c	Sun Nov 11 17:19:56 2018 +1030
+@@ -699,16 +699,30 @@
+ void
+ Xqdol(void)
+ {
+-	char *s;
+-	word *a;
++	char *s, *t;
++	word *a, *star;
++	int n;
+ 	if(count(runq->argv->words)!=1){
+ 		Xerror1("variable name not singleton!");
+ 		return;
+ 	}
+ 	s = Str(runq->argv->words);
+-	a = vlook(s)->val;
+-	poplist();
+-	Pushword(list2str(a));
++	n = 0;
++	for(t = s;'0'<=*t && *t<='9';t++) n = n*10+*t-'0';
++	a = runq->argv->next->words;
++	if(n==0 || *t){
++		a = vlook(s)->val;
++		poplist();
++		Pushword(list2str(a));
++	}else{
++		star = vlook("*")->val;
++		if(star && 1<=n && n<=count(star)){
++			while(--n) star = star->next;
++			a = newword(star->word, a);
++		}
++		poplist();
++		runq->argv->words = a;
++	}
+ }
+ 
+ word*
