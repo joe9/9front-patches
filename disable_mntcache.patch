@@ -1,0 +1,31 @@
+# HG changeset patch
+# User joe
+# Date 1542390945 25200
+#      Fri Nov 16 10:55:45 2018 -0700
+# Node ID 834044099a6bf361c98b7b4824a3e3eaede66630
+# Parent  efa5461222f86faba6fd755f012155f2c823b862
+disable mntcache
+
+diff -r efa5461222f8 -r 834044099a6b lib/namespace
+--- a/lib/namespace	Sun Nov 04 15:40:33 2018 -0700
++++ b/lib/namespace	Fri Nov 16 10:55:45 2018 -0700
+@@ -1,5 +1,7 @@
+ # root
+-mount -aC #s/boot /root $rootspec
++#mount -aC #s/boot /root $rootspec
++# disable mntcache
++mount -a #s/boot /root $rootspec
+ bind -a $rootdir /
+ 
+ # kernel devices
+@@ -32,7 +34,9 @@
+ mount -a /srv/dns /net
+ mount -a /srv/net /net
+ 
+-mount -C /srv/boot /n/other other
++#mount -C /srv/boot /n/other other
++# disable mntcache
++mount /srv/boot /n/other other
+ bind -c /n/other/usr/$user/tmp /usr/$user/tmp
+ 
+ bind -c /usr/$user/tmp /tmp
