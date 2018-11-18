@@ -1,0 +1,32 @@
+# HG changeset patch
+# User joe
+# Date 1542509569 25200
+#      Sat Nov 17 19:52:49 2018 -0700
+# Node ID 39f1e268408e7881b55cf6b4597df448173554ef
+# Parent  e760c9dd6eec4d5922a44079d9e633d7242eae54
+increase more scale window sizes
+
+diff -r e760c9dd6eec -r 39f1e268408e sys/src/9/ip/tcp.c
+--- a/sys/src/9/ip/tcp.c	Sat Nov 17 18:49:03 2018 -0700
++++ b/sys/src/9/ip/tcp.c	Sat Nov 17 19:52:49 2018 -0700
+@@ -86,8 +86,8 @@
+ 	 * these factors determine the ultimate bandwidth-delay product.
+ 	 * 64kb · 2⁵ = 2mb, or 2x overkill for 100mbps · 70ms.
+ 	 */
+-	Maxqscale	= 4,		/* maximum queuing scale */
+-	Defadvscale	= 4,		/* default advertisement */
++	Maxqscale	= 14 /* 4 */,		/* maximum queuing scale */
++	Defadvscale	= 14 /* 4 */,		/* default advertisement */
+ };
+ 
+ /* Must correspond to the enumeration above */
+@@ -945,7 +945,8 @@
+ 	tpriv->stats[Mss] = tcb->mss;
+ 
+ 	/* default is no window scaling */
+-	tcpsetscale(s, tcb, 0, 0);
++	/* tcpsetscale(s, tcb, 0, 0); */
++	tcpsetscale(s, tcb, 14, 14);
+ }
+ 
+ /*
