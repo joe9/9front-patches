@@ -1,20 +1,25 @@
 # HG changeset patch
 # User joe
-# Date 1542505743 25200
-#      Sat Nov 17 18:49:03 2018 -0700
-# Node ID e760c9dd6eec4d5922a44079d9e633d7242eae54
-# Parent  834044099a6bf361c98b7b4824a3e3eaede66630
-increase the tcp window scale factor to 14 from 3
+# Date 1542798089 25200
+#      Wed Nov 21 04:01:29 2018 -0700
+# Node ID ee4b3ea10f836fc228e383712594e866b38611b7
+# Parent  7acfe551f5ad016133121b3c1876bf6d036fa53e
+change window scale to 128MiB
 
-diff -r 834044099a6b -r e760c9dd6eec sys/src/9/ip/tcp.c
---- a/sys/src/9/ip/tcp.c	Fri Nov 16 10:55:45 2018 -0700
-+++ b/sys/src/9/ip/tcp.c	Sat Nov 17 18:49:03 2018 -0700
-@@ -43,7 +43,7 @@
- 	MSSOPT		= 2,
- 	MSS_LENGTH	= 4,		/* Maximum segment size */
- 	WSOPT		= 3,
--	WS_LENGTH	= 3,		/* Bits to scale window size by */
-+	WS_LENGTH	= 14 /*3*/,		/* Bits to scale window size by */
- 	MSL2		= 10,
- 	MSPTICK		= 50,		/* Milliseconds per timer tick */
- 	DEF_MSS		= 1460,		/* Default maximum segment */
+My equipment can handle upto 1 Gbps. 128MiB should
+more than saturate it.
+
+diff -r 7acfe551f5ad -r ee4b3ea10f83 sys/src/9/ip/tcp.c
+--- a/sys/src/9/ip/tcp.c	Wed Nov 21 02:08:15 2018 +0100
++++ b/sys/src/9/ip/tcp.c	Wed Nov 21 04:01:29 2018 -0700
+@@ -86,8 +86,8 @@
+ 	 * these factors determine the ultimate bandwidth-delay product.
+ 	 * 64kb · 2⁵ = 2mb, or 2x overkill for 100mbps · 70ms.
+ 	 */
+-	Maxqscale	= 4,		/* maximum queuing scale */
+-	Defadvscale	= 4,		/* default advertisement */
++	Maxqscale	= 8 /* 4 */,		/* maximum queuing scale */
++	Defadvscale	= 8 /* 4 */,		/* default advertisement */
+ };
+ 
+ /* Must correspond to the enumeration above */
