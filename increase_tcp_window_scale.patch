@@ -6,8 +6,9 @@
 # Parent  7acfe551f5ad016133121b3c1876bf6d036fa53e
 change window scale to 128MiB
 
-My equipment can handle upto 1 Gbps. 128MiB should
-more than saturate it.
+My equipment can handle upto 1 Gbps. 128MiB at 100ms latency
+will saturate it. Setting this to 16MiB to provide (hopefully)
+128MiB/s at 100ms latency.
 
 diff -r 7acfe551f5ad -r ee4b3ea10f83 sys/src/9/ip/tcp.c
 --- a/sys/src/9/ip/tcp.c	Wed Nov 21 02:08:15 2018 +0100
