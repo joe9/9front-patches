@@ -2,11 +2,11 @@
 # User joe
 # Date 1543685434 25200
 #      Sat Dec 01 10:30:34 2018 -0700
-# Node ID 7410359160d563c3489057b715c44d71956cd2aa
+# Node ID 66d2dc19b204b95e7340e39ba67c61ddb87dea6b
 # Parent  d433e6ca7d17010051c30a942c3a096a5e5561c8
 driver for Intel Corporation Ethernet Connection X553/X550-AT 10GBASE-T
 
-diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc/etherx550.c
+diff -r d433e6ca7d17 -r 66d2dc19b204 sys/src/9/pc/etherx550.c
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
 +++ b/sys/src/9/pc/etherx550.c	Sat Dec 01 10:30:34 2018 -0700
 @@ -0,0 +1,892 @@
@@ -39,11 +39,11 @@ diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc/etherx550.c
 +
 +	/* interrupt */
 +	Icr		= 0x00800/4,	/* interrupt cause read */
-+	Ics		= 0x00808/4,	/* " set TODO unused */
++	Ics		= 0x00808/4,	/* " set */
 +	Ims		= 0x00880/4,	/* " mask read/set */
 +	Imc		= 0x00888/4,	/* " mask clear */
-+	Iac		= 0x00810/4,	/* " ayto clear TODO unused */
-+	Iam		= 0x00890/4,	/* " auto mask enable TODO unused */
++	Iac		= 0x00810/4,	/* " auto clear */
++	Iam		= 0x00890/4,	/* " auto mask enable */
 +	Itr		= 0x00820/4,	/* " throttling rate (0-19) */
 +	Ivar		= 0x00900/4,	/* " vector allocation regs. */
 +
@@ -902,7 +902,7 @@ diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc/etherx550.c
 +{
 +	addethercard("iX550", pnp);
 +}
-diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc64/pc64
+diff -r d433e6ca7d17 -r 66d2dc19b204 sys/src/9/pc64/pc64
 --- a/sys/src/9/pc64/pc64	Sat Dec 01 11:39:49 2018 +0000
 +++ b/sys/src/9/pc64/pc64	Sat Dec 01 10:30:34 2018 -0700
 @@ -58,6 +58,7 @@
