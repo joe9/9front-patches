@@ -1,15 +1,15 @@
 # HG changeset patch
 # User joe
-# Date 1543640993 25200
-#      Fri Nov 30 22:09:53 2018 -0700
-# Node ID 59ef842116b5b0dc3d4996425cf515c25ebd7e6e
-# Parent  ee4b3ea10f836fc228e383712594e866b38611b7
-added ethernet driver for Intel Corporation Ethernet Connection X553/X550-AT 10GBASE-T
+# Date 1543685434 25200
+#      Sat Dec 01 10:30:34 2018 -0700
+# Node ID 7410359160d563c3489057b715c44d71956cd2aa
+# Parent  d433e6ca7d17010051c30a942c3a096a5e5561c8
+driver for Intel Corporation Ethernet Connection X553/X550-AT 10GBASE-T
 
-diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
+diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc/etherx550.c
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/sys/src/9/pc/etherx550.c	Fri Nov 30 22:09:53 2018 -0700
-@@ -0,0 +1,931 @@
++++ b/sys/src/9/pc/etherx550.c	Sat Dec 01 10:30:34 2018 -0700
+@@ -0,0 +1,892 @@
 +/*
 + * intel 10GB ethernet pci-express driver
 + * 6.0.0:	net  02.00.00 8086/15c8  11 0:dfc0000c 2097152 4:dfe0400c 16384
@@ -31,9 +31,6 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +	Ctrl		= 0x00000/4,	/* Device Control */
 +	Status		= 0x00008/4,	/* Device Status */
 +	Ctrlext		= 0x00018/4,	/* Extended Device Control */
-+	Esdp		= 0x00020/4,	/* extended sdp control */
-+	Esodp		= 0x00028/4,	/* extended od sdp control */
-+	Ledctl		= 0x00200/4,	/* led control */
 +	Tcptimer	= 0x0004c/4,	/* tcp timer */
 +
 +	/* nvm */
@@ -42,27 +39,13 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +
 +	/* interrupt */
 +	Icr		= 0x00800/4,	/* interrupt cause read */
-+	Ics		= 0x00808/4,	/* " set */
++	Ics		= 0x00808/4,	/* " set TODO unused */
 +	Ims		= 0x00880/4,	/* " mask read/set */
 +	Imc		= 0x00888/4,	/* " mask clear */
-+	Iac		= 0x00810/4,	/* " ayto clear */
-+	Iam		= 0x00890/4,	/* " auto mask enable */
++	Iac		= 0x00810/4,	/* " ayto clear TODO unused */
++	Iam		= 0x00890/4,	/* " auto mask enable TODO unused */
 +	Itr		= 0x00820/4,	/* " throttling rate (0-19) */
 +	Ivar		= 0x00900/4,	/* " vector allocation regs. */
-+	Ivarmisc	= 0x00a00/4,	/* Miscellaneous Interrupt Vector Allocation */
-+	/* msi interrupt */
-+	Msixt		= 0x0000/4,	/* msix table (bar3) */
-+	Msipba		= 0x2000/4,	/* msix pending bit array (bar3) */
-+	Pbacl		= 0x11068/4,	/* pba clear */
-+	Gpie		= 0x00898/4,	/* general purpose int enable */
-+
-+	/* flow control */
-+	Fcttv		= 0x03200/4,	/* " transmit timer value (0-3) */
-+	Fcrtl		= 0x03220/4,	/* " rx threshold low (0-7) +8n */
-+	Fcrth		= 0x03260/4,	/* " rx threshold high (0-7) +8n */
-+	Fcrtv		= 0x032a0/4,	/* " refresh value threshold */
-+	Fccfg		= 0x03d00/4,	/* " Flow Control Configuration */
-+	Tfcs		= 0x0ce00/4,	/* " tx status */
 +
 +	/* rx dma */
 +	Rdbal		= 0x01000/4,	/* rx desc base low (0-63) +0x40n */
@@ -76,26 +59,14 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +	Rdrxctl		= 0x02f00/4,	/* rx dma control */
 +	Rxpbsize	= 0x03c00/4,	/* rx packet buffer size */
 +	Rxctrl		= 0x03000/4,	/* rx control */
-+	Dropen		= 0x03d04/4,	/* drop enable control */
 +
 +	/* rx */
 +	Rxcsum		= 0x05000/4,	/* rx checksum control */
-+	Rfctl		= 0x04008/4,	/* rx filter control */
 +	Mta		= 0x05200/4,	/* multicast table array (0-127) */
 +	Ral		= 0x05400/4,	/* rx address low */
 +	Rah		= 0x05404/4,
-+	Psrtype		= 0x05480/4,	/* packet split rx type. */
 +	Vfta		= 0x0a000/4,	/* vlan filter table array. */
 +	Fctrl		= 0x05080/4,	/* filter control */
-+	Vlnctrl		= 0x05088/4,	/* vlan control */
-+	Msctctrl	= 0x05090/4,	/* multicast control */
-+	Mrqc		= 0x05818/4,	/* multiple rx queues cmd */
-+	Vmdctl		= 0x0581c/4,	/* vmdq control */
-+	Imir		= 0x05a80/4,	/* immediate irq rx (0-7) */
-+	Imirext		= 0x05aa0/4,	/* immediate irq rx ext */
-+	Imirvp		= 0x05ac0/4,	/* immediate irq vlan priority */
-+	Reta		= 0x05c00/4,	/* redirection table */
-+	Rssrk		= 0x05c80/4,	/* rss random key */
 +
 +	/* tx */
 +	Tdbal		= 0x06000/4,	/* tx desc base low +0x40n */
@@ -104,34 +75,21 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +	Tdh		= 0x06010/4,	/* " head */
 +	Tdt		= 0x06018/4,	/* " tail */
 +	Txdctl		= 0x06028/4,	/* " control */
-+	Tdwbal		= 0x06038/4,	/* " write-back address low */
-+	Tdwbah		= 0x0603c/4,
 +	Dmatxctl	= 0x04a80/4,
-+	
-+	Dtxctl		= 0x07e00/4,	/* tx dma control */
-+	Tdcatxctrl	= 0x07200/4,	/* tx dca register (0-15) */
-+	Tipg		= 0x0cb00/4,	/* tx inter-packet gap */
-+	Txpbsize	= 0x0cc00/4,	/* tx packet-buffer size (0-15) */
 +
 +	/* mac */
 +	Hlreg0		= 0x04240/4,	/* highlander control reg 0 */
 +	Hlreg1		= 0x04244/4,	/* highlander control reg 1 (ro) */
-+	Msca		= 0x0425c/4,	/* mdi signal cmd & addr */
-+	Msrwd		= 0x04260/4,	/* mdi single rw data */
 +	Maxfrs		= 0x04268/4,	/* max frame size */
-+	Pcss1		= 0x04288/4,	/* xgxs status 1 */
-+	Pcss2		= 0x0428c/4,
-+	Xpcss		= 0x04290/4,	/* 10gb-x pcs status */
-+	Serdesc		= 0x04298/4,	/* serdes control */
-+	Macs		= 0x0429c/4,	/* fifo control & report */
-+	Autoc		= 0x042a0/4,	/* autodetect control & status */
 +	Links		= 0x042a4/4,	/* link status */
-+	Autoc2		= 0x042a8/4,
 +};
 +
 +enum {
 +	/* Ctrl */
 +	Rst		= 1<<26,	/* full nic reset */
++	
++	/* Ctrlext */
++	Drvload		= 1<<28,	/* Driver Load */
 +	
 +	/* Eec */
 +	AutoRd		= 1<<9,		/* NVM auto read done */
@@ -168,8 +126,14 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +
 +	/* interrupts */
 +	Irx0		= 1<<0,		/* driver defined - rx interrupt */
-+	Itx0		= 1<<1,		/* driver defined - tcp timer interrupt */
++	Itx0		= 1<<1,		/* driver defined - tx interrupt */
 +	Lsc		= 1<<20,	/* link status change */
++	
++	/* Ivar Interrupt Vector Allocation Register */
++	Rxintpos	= 0,		/* Map the 0th queue Rx interrupt to the 0th bit of EICR register */
++	Rxintallow	= 1<<7,
++	Txintpos	= 1<<8,		/* Map the 0th queue Tx interrupt to the 1st bit of EICR register */
++	Txintallow	= 1<<15,
 +
 +	/* Links */
 +	Lnkup	= 1<<30,
@@ -612,6 +576,7 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +		c->reg[Fctrl] &= ~(Upe | Mpe);
 +}
 +
++/* TODO what does this do? */
 +static void
 +multicast(void *a, uchar *ea, int on)
 +{
@@ -647,13 +612,13 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +
 +	l = c->reg[Ral];
 +	h = c->reg[Rah];
-+	c->ra[0] = l&0xFF;
-+	c->ra[1] = l>>8&0xFF;
-+	c->ra[2] = l>>16&0xFF;
-+	c->ra[3] = l>>24&0xFF;
-+	c->ra[4] = h&0xFF;
-+	c->ra[5] = h>>8&0xFF;
-+	print("pnp: l=%ux Ral=%ux h=%ux Rah=%ux = h&0xff=%ux h>>8&0xff=%ux (h>>8)=%ux (h>>8)&0xff=%ux => mac=%02ux%02ux%02ux%02ux%02ux%02ux\n",l,c->reg[Ral],h,c->reg[Rah],h&0xff, h>>8&0xff, (h>>8), (h>>8)&0xff, c->ra[0],c->ra[1],c->ra[2],c->ra[3],c->ra[4],c->ra[5]);
++	c->ra[0] = l & 0xFF;
++	c->ra[1] = l>>8 & 0xFF;
++	c->ra[2] = l>>16 & 0xFF;
++	c->ra[3] = l>>24 & 0xFF;
++	c->ra[4] = h & 0xFF;
++	c->ra[5] = h>>8 & 0xFF;
++	print("pnp: l=%ux Ral=%ux h=%ux Rah=%ux = h&0xff=%ux h>>8&0xff=%ux (h>>8)=%ux (h>>8)&0xff=%ux => mac=%02ux%02ux%02ux%02ux%02ux%02ux\n",l,c->reg[Ral],h,c->reg[Rah],h & 0xff, h>>8 & 0xff, (h>>8), (h>>8) & 0xff, c->ra[0],c->ra[1],c->ra[2],c->ra[3],c->ra[4],c->ra[5]);
 +	c->reg[Imc] = ~0;
 +	c->reg[Ctrl] |= Rst;
 +	for(i = 0; i < 100; i++){
@@ -672,6 +637,7 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +		c->reg[Mta + i] = 0;
 +	for(i = 1; i < 640; i++)
 +		c->reg[Vfta + i] = 0;
++	c->reg[Ctrlext] &= ~Drvload; /* driver works without this */
 +	return 0;
 +}
 +
@@ -710,14 +676,8 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +	for(i = 0; i<nelem(c->stats); i++)
 +		c->stats[i] = 0;
 +
-+	/* make some guesses for flow control */
-+	c->reg[Fcrtl] = 0x10000 | 1<<31;
-+	c->reg[Fcrth] = 0x40000 | 1<<31;
-+	c->reg[Fcrtv] = 0x6000;
-+
 +	/* configure interrupt mapping */
-+	c->reg[Ivar+0] =   0 | 1<<7 /* for rx queue */ ;
-+	c->reg[Ivarmisc] = 1 | 1<<7; /* msi-x tcp timer interrupt to bit 1 of EICR */
++	c->reg[Ivar+0] =   Rxintpos | Rxintallow | Txintpos | Txintallow;
 +
 +	/* interrupt throttling goes here. */
 +	for(i = Itr; i < Itr + 20; i++)
@@ -785,6 +745,7 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +	rxinit(c);
 +	txinit(c);
 +
++	c->reg[Ctrlext] |= Drvload; /* driver works without this */
 +	snprint(buf, sizeof buf, "#l%dl", e->ctlrno);
 +	kproc(buf, lproc, e);
 +	snprint(buf, sizeof buf, "#l%dr", e->ctlrno);
@@ -941,9 +902,9 @@ diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc/etherx550.c
 +{
 +	addethercard("iX550", pnp);
 +}
-diff -r ee4b3ea10f83 -r 59ef842116b5 sys/src/9/pc64/pc64
---- a/sys/src/9/pc64/pc64	Wed Nov 21 04:01:29 2018 -0700
-+++ b/sys/src/9/pc64/pc64	Fri Nov 30 22:09:53 2018 -0700
+diff -r d433e6ca7d17 -r 7410359160d5 sys/src/9/pc64/pc64
+--- a/sys/src/9/pc64/pc64	Sat Dec 01 11:39:49 2018 +0000
++++ b/sys/src/9/pc64/pc64	Sat Dec 01 10:30:34 2018 -0700
 @@ -58,6 +58,7 @@
  #	ether82557	pci
  	ether82563	pci
