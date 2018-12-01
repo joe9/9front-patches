@@ -2,14 +2,14 @@
 # User joe
 # Date 1543685434 25200
 #      Sat Dec 01 10:30:34 2018 -0700
-# Node ID ceb573e32272962885a0cecd852eb0409503bc04
+# Node ID 99b7469b7b2e86bf1a9020ebcb2f25f1b1900ca5
 # Parent  d433e6ca7d17010051c30a942c3a096a5e5561c8
 driver for Intel Corporation Ethernet Connection X553/X550-AT 10GBASE-T
 
-diff -r d433e6ca7d17 -r ceb573e32272 sys/src/9/pc/etherx550.c
+diff -r d433e6ca7d17 -r 99b7469b7b2e sys/src/9/pc/etherx550.c
 --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
 +++ b/sys/src/9/pc/etherx550.c	Sat Dec 01 10:30:34 2018 -0700
-@@ -0,0 +1,897 @@
+@@ -0,0 +1,896 @@
 +/*
 + * intel 10GB ethernet pci-express driver
 + * 6.0.0:	net  02.00.00 8086/15c8  11 0:dfc0000c 2097152 4:dfe0400c 16384
@@ -579,7 +579,6 @@ diff -r d433e6ca7d17 -r ceb573e32272 sys/src/9/pc/etherx550.c
 +		c->reg[Fctrl] &= ~(Upe | Mpe);
 +}
 +
-+/* TODO what does this do? */
 +static void
 +multicast(void *a, uchar *ea, int on)
 +{
@@ -622,7 +621,7 @@ diff -r d433e6ca7d17 -r ceb573e32272 sys/src/9/pc/etherx550.c
 +		c->ra[3] = l>>24 & 0xFF;
 +		c->ra[4] = h & 0xFF;
 +		c->ra[5] = h>>8 & 0xFF;
-+		print("pnp: l=%ux Ral=%ux h=%ux Rah=%ux = h&0xff=%ux h>>8&0xff=%ux (h>>8)=%ux (h>>8)&0xff=%ux => mac=%02ux%02ux%02ux%02ux%02ux%02ux\n",l,c->reg[Ral],h,c->reg[Rah],h & 0xff, h>>8 & 0xff, (h>>8), (h>>8) & 0xff, c->ra[0],c->ra[1],c->ra[2],c->ra[3],c->ra[4],c->ra[5]);
++		print("pnp: Ral=%ux Rah=%ux => mac=%02ux%02ux%02ux%02ux%02ux%02ux\n",c->reg[Ral],c->reg[Rah], c->ra[0],c->ra[1],c->ra[2],c->ra[3],c->ra[4],c->ra[5]);
 +	}
 +	c->reg[Imc] = ~0;
 +	c->reg[Ctrl] |= Rst;
@@ -907,7 +906,7 @@ diff -r d433e6ca7d17 -r ceb573e32272 sys/src/9/pc/etherx550.c
 +{
 +	addethercard("iX550", pnp);
 +}
-diff -r d433e6ca7d17 -r ceb573e32272 sys/src/9/pc64/pc64
+diff -r d433e6ca7d17 -r 99b7469b7b2e sys/src/9/pc64/pc64
 --- a/sys/src/9/pc64/pc64	Sat Dec 01 11:39:49 2018 +0000
 +++ b/sys/src/9/pc64/pc64	Sat Dec 01 10:30:34 2018 -0700
 @@ -58,6 +58,7 @@
