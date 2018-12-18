@@ -1,0 +1,22 @@
+# HG changeset patch
+# User joe
+# Date 1545102907 25200
+#      Mon Dec 17 20:15:07 2018 -0700
+# Node ID fba7342d80b76a86a67d948e4acea8bb38d0862a
+# Parent  c605016cef86fc6560c7693636be46da3fef34e9
+use the root servers instead of the isp provided dns server
+
+check plan9.notes for more details
+
+diff -r c605016cef86 -r fba7342d80b7 rc/bin/cpurc
+--- a/rc/bin/cpurc	Sat Dec 15 20:39:32 2018 +0100
++++ b/rc/bin/cpurc	Mon Dec 17 20:15:07 2018 -0700
+@@ -66,7 +66,7 @@
+ 					ip/ipconfig -6 ether $ether
+ 					ip/ipconfig -N ether $ether >[2]/dev/null || @{
+ 						ip/ipconfig ether $ether ra6 recvra 1 &
+-						ip/ipconfig -h $sysname ether $ether &
++						ip/ipconfig -P -h $sysname ether $ether &
+ 						wait
+ 					}
+ 				}
