@@ -10,6 +10,10 @@ My equipment can handle upto 1 Gbps. 128MiB at 100ms latency
 will saturate it. Setting this to 16MiB to provide (hopefully)
 128MiB/s at 100ms latency.
 
+Be careful with this patch. On 9ramnode, it set the winsize=255 when
+sending the ACK to betfair. That stops the betfair server from
+responding any further as the 255 window size is too low.
+
 diff -r 7acfe551f5ad -r ee4b3ea10f83 sys/src/9/ip/tcp.c
 --- a/sys/src/9/ip/tcp.c	Wed Nov 21 02:08:15 2018 +0100
 +++ b/sys/src/9/ip/tcp.c	Wed Nov 21 04:01:29 2018 -0700
