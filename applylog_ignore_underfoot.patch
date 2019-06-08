@@ -1,0 +1,56 @@
+# HG changeset patch
+# User joe
+# Date 1559998278 25200
+#      Sat Jun 08 05:51:18 2019 -0700
+# Node ID e193d02965a2ffe88681832694f90c84da33052e
+# Parent  7063e86b449095b69630756e7e55fdc054eecbb1
+added flag to ignore underfoot changes
+
+diff -r 7063e86b4490 -r e193d02965a2 sys/src/cmd/replica/applylog.c
+--- a/sys/src/cmd/replica/applylog.c	Wed May 22 13:11:41 2019 -0700
++++ b/sys/src/cmd/replica/applylog.c	Sat Jun 08 05:51:18 2019 -0700
+@@ -28,6 +28,7 @@
+ Db *clientdb;
+ int skip;
+ int douid;
++int underfoot = 1;
+ char *mkname(char*, int, char*, char*);
+ char localbuf[10240];
+ char remotebuf[10240];
+@@ -145,7 +146,7 @@
+ void
+ usage(void)
+ {
+-	fprint(2, "usage: replica/applylog [-cnSstuv] [-T timefile] clientdb clientroot serverroot [path ...]\n");
++	fprint(2, "usage: replica/applylog [-cnSstuvf] [-T timefile] clientdb clientroot serverroot [path ...]\n");
+ 	exits("usage");
+ }
+ 
+@@ -204,6 +205,9 @@
+ 	case 'v':
+ 		verbose++;
+ 		break;
++	case 'f':
++		underfoot = 0;
++		break;
+ 	default:
+ 		usage();
+ 	}ARGEND
+@@ -978,6 +982,17 @@
+ 		return -1;
+ 	}
+ 	close(rfd);
++	if(underfoot == 1 &&
++		(d0->qid.path != d1->qid.path
++		|| d0->qid.vers != d1->qid.vers
++		|| d0->mtime != d1->mtime
++		|| d0->length != d1->length)){
++		/* file changed underfoot; go around again */
++		close(tfd);
++		free(d0);
++		free(d1);
++		goto Again;
++	}
+ 	if(d0->qid.path != d1->qid.path
+ 	|| d0->qid.vers != d1->qid.vers
+ 	|| d0->mtime != d1->mtime
