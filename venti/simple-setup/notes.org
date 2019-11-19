@@ -19,9 +19,9 @@ dist-venti-bloom 	/sys/lib/dist/pc/inst 	Add Venti Bloom filter configuration. 	
 installing venti patches (using drawterm)
 
 	cd /
-	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-noarchive.diff
-	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-redial.diff
-	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-sha1.diff
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-noarchive.diff # obsolete, merged into 9front
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-redial.diff # obsolete, merged into 9front
+	ape/patch -p0 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/libventi-sha1.diff # obsolete, merged into 9front
 	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/allow-fossil-p9sk1-authentication.patch
 	ape/patch -p1 </mnt/term/home/j/dev/apps/plan9/custom/9front-patches/venti/stop-fossil-venti-servers.patch
 	cd /sys/src/libventi
