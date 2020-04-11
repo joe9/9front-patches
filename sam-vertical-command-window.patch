@@ -15,7 +15,7 @@ diff -r f66ba64c1742 -r 50b8650fdc41 sys/src/cmd/samterm/main.c
  	r = screen->r;
 -	r.max.y = r.min.y+Dy(r)/5;
 +	/* r.max.y = r.min.y+Dy(r)/5; */
-+	r.max.x = r.min.x+Dx(r)/5;
++	r.max.x = (r.min.x+Dx(r)/5) > 320 ? 320 : (r.min.x+Dx(r)/5);
  	flstart(screen->clipr);
  	rinit(&cmd.rasp);
  	flnew(&cmd.l[0], gettext, 1, &cmd);
